@@ -42,6 +42,10 @@ export type RoadmapCourse = {
   code: string
   title: string
   kind: 'ds' | 'critical' | 'plain'
+  /** Matches a KNOWN_COURSES id so pills and checkboxes share completion state. */
+  id?: string
+  /** Where the pill's ↗ leads (catalog or GE info page). */
+  url?: string
 }
 
 export type RoadmapTerm = {
@@ -144,6 +148,9 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "Beej's Guide to C Programming", url: "https://beej.us/guide/bgc/" },
           { label: "GDB documentation", url: "https://sourceware.org/gdb/documentation/" },
+          { label: "Video · C Programming Tutorial for Beginners (freeCodeCamp)", url: "https://www.youtube.com/watch?v=KJgsSFOSQv0" },
+          { label: "Practice · learn-c.org interactive exercises", url: "https://www.learn-c.org/" },
+          { label: "Practice · Exercism C track, free mentored exercises", url: "https://exercism.org/tracks/c" },
         ],
       },
       {
@@ -162,6 +169,8 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "The Linux man-pages project", url: "https://www.kernel.org/doc/man-pages/" },
           { label: "The Linux Command Line", url: "https://linuxcommand.org/tlcl.php" },
+          { label: "Video · The 50 Most Popular Linux Commands (freeCodeCamp)", url: "https://www.youtube.com/watch?v=ZtqBQ68cfJc" },
+          { label: "Game · OverTheWire Bandit, learn the terminal by playing", url: "https://overthewire.org/wargames/bandit/" },
         ],
       },
       {
@@ -180,6 +189,7 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "OSTEP · Processes", url: "https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf" },
           { label: "Linux process API man pages", url: "https://man7.org/linux/man-pages/man2/fork.2.html" },
+          { label: "Video series · Unix Processes in C (CodeVault)", url: "https://www.youtube.com/playlist?list=PLfqABt5AS4FkW5mOn2Tn9ZZLLDwA3kZUY" },
         ],
       },
       {
@@ -198,6 +208,7 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "OSTEP · Interlude: Process API", url: "https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-api.pdf" },
           { label: "pipe(2) manual page", url: "https://man7.org/linux/man-pages/man2/pipe.2.html" },
+          { label: "Video · Practical use case for fork and pipe in C (CodeVault)", url: "https://www.youtube.com/watch?v=6u_iPGVkfZ4" },
         ],
       },
       {
@@ -216,6 +227,7 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "OSTEP · Concurrency", url: "https://pages.cs.wisc.edu/~remzi/OSTEP/#book-chapters" },
           { label: "pthreads overview", url: "https://man7.org/linux/man-pages/man7/pthreads.7.html" },
+          { label: "Video · Short introduction to threads, pthreads (CodeVault)", url: "https://www.youtube.com/watch?v=d9s_d28yJq0" },
         ],
       },
       {
@@ -233,6 +245,8 @@ export const COURSES: Record<string, CourseInfo> = {
         ],
         resources: [
           { label: "OSTEP · CPU Scheduling", url: "https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf" },
+          { label: "Video · Operating Systems, Crash Course CS #18", url: "https://www.youtube.com/watch?v=26QPDBe-NB8" },
+          { label: "Simulators · official OSTEP homework (scheduler.py and friends)", url: "https://github.com/remzi-arpacidusseau/ostep-homework" },
         ],
       },
       {
@@ -250,6 +264,8 @@ export const COURSES: Record<string, CourseInfo> = {
         ],
         resources: [
           { label: "OSTEP · Virtualization", url: "https://pages.cs.wisc.edu/~remzi/OSTEP/#book-chapters" },
+          { label: "Video series · Virtual Memory (David Black-Schaffer)", url: "https://www.youtube.com/watch?v=qcBIvnQt0Bw" },
+          { label: "Simulators · OSTEP paging homework (paging-policy.py)", url: "https://github.com/remzi-arpacidusseau/ostep-homework" },
         ],
       },
       {
@@ -268,6 +284,7 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "OSTEP · Persistence", url: "https://pages.cs.wisc.edu/~remzi/OSTEP/#book-chapters" },
           { label: "xv6 book", url: "https://pdos.csail.mit.edu/6.828/2023/xv6/book-riscv-rev3.pdf" },
+          { label: "Video · Files & File Systems, Crash Course CS #20", url: "https://www.youtube.com/watch?v=KN8YgJnShPM" },
         ],
       },
     ],
@@ -304,6 +321,8 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "Computer Networks: A Systems Approach", url: "https://book.systemsapproach.org/" },
           { label: "An Introduction to Computer Networks", url: "https://intronetworks.cs.luc.edu/" },
+          { label: "Video series · Networking tutorial (Ben Eater)", url: "https://www.youtube.com/playlist?list=PLowKtXNTBypH19whXTVoG3oKSuOcw_XeW" },
+          { label: "Practice · Kurose & Ross interactive problems, the standard textbook's own drills", url: "https://gaia.cs.umass.edu/kurose_ross/interactive/" },
         ],
       },
       {
@@ -322,6 +341,8 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "Official Wireshark User's Guide", url: "https://www.wireshark.org/docs/wsug_html_chunked/" },
           { label: "Wireshark display-filter reference", url: "https://www.wireshark.org/docs/dfref/" },
+          { label: "Video · Learn Wireshark in 10 minutes (Vinsloev Academy)", url: "https://www.youtube.com/watch?v=lb1Dw0elw0Q" },
+          { label: "Practice · official sample captures to dissect offline", url: "https://wiki.wireshark.org/SampleCaptures" },
         ],
       },
       {
@@ -340,6 +361,7 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "Python socket documentation", url: "https://docs.python.org/3/library/socket.html" },
           { label: "Beej's Guide to Network Programming", url: "https://beej.us/guide/bgnet/" },
+          { label: "Video · Python Socket Programming Tutorial (Tech With Tim)", url: "https://www.youtube.com/watch?v=3QiPPX-KeSc" },
         ],
       },
       {
@@ -358,6 +380,7 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "MDN · Overview of HTTP", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview" },
           { label: "Cloudflare Learning Center · DNS", url: "https://www.cloudflare.com/learning/dns/what-is-dns/" },
+          { label: "Video · How a DNS Server works (PowerCert)", url: "https://www.youtube.com/watch?v=mpQZVYPuDGU" },
         ],
       },
       {
@@ -375,6 +398,8 @@ export const COURSES: Record<string, CourseInfo> = {
         ],
         resources: [
           { label: "Systems Approach · Reliable byte stream", url: "https://book.systemsapproach.org/e2e/tcp.html" },
+          { label: "Video · TCP vs UDP Comparison (PowerCert)", url: "https://www.youtube.com/watch?v=uwoD5YsGACg" },
+          { label: "Practice · Kurose & Ross interactive problems on reliable transport", url: "https://gaia.cs.umass.edu/kurose_ross/interactive/" },
         ],
       },
       {
@@ -392,6 +417,7 @@ export const COURSES: Record<string, CourseInfo> = {
         ],
         resources: [
           { label: "Systems Approach · Congestion control", url: "https://book.systemsapproach.org/congestion/tcpcc.html" },
+          { label: "Video · TCP Congestion Control, Ep. 3.7 (Kurose & Ross)", url: "https://www.youtube.com/watch?v=rib_ujnMqcs" },
         ],
       },
       {
@@ -409,6 +435,9 @@ export const COURSES: Record<string, CourseInfo> = {
         ],
         resources: [
           { label: "Systems Approach · Internetworking", url: "https://book.systemsapproach.org/internetworking/index.html" },
+          { label: "Video series · Subnetting Mastery (Practical Networking)", url: "https://www.youtube.com/playlist?list=PLIFyRwBY_4bQUE4IB5c4VPRyDoLgOdExE" },
+          { label: "Practice · unlimited subnetting drills (subnetipv4.com)", url: "https://subnetipv4.com/" },
+          { label: "Lab · Cisco Packet Tracer, free network simulator", url: "https://www.netacad.com/cisco-packet-tracer" },
         ],
       },
       {
@@ -427,6 +456,7 @@ export const COURSES: Record<string, CourseInfo> = {
         resources: [
           { label: "pandas user guide", url: "https://pandas.pydata.org/docs/user_guide/index.html" },
           { label: "Python socket documentation", url: "https://docs.python.org/3/library/socket.html" },
+          { label: "Video · Data Analysis with Python full course (freeCodeCamp)", url: "https://www.youtube.com/watch?v=r-uOLxNrNk8" },
         ],
       },
     ],
@@ -439,58 +469,67 @@ export const KNOWN_COURSES: KnownCourse[] = [
   { id: "cs47", label: "CS 47", default: true },
   { id: "cs146", label: "CS 146", default: true },
   { id: "cs151", label: "CS 151", default: true },
+  { id: "cs149", label: "CS 149", default: false },
+  { id: "cs158a", label: "CS 158A", default: false },
+  { id: "ge-r", label: "GE Area R", default: false },
+  { id: "ge-s", label: "GE Area S", default: false },
+  { id: "ge-v", label: "GE Area V", default: false },
   { id: "cs100w", label: "CS 100W", default: false },
   { id: "cs147", label: "CS 147", default: false },
-  { id: "math39", label: "MATH 39", default: false },
-  { id: "math161a", label: "MATH 161A", default: false },
   { id: "cs157a", label: "CS 157A", default: false },
 ]
+
+const catalog = (keyword: string) =>
+  `https://catalog.sjsu.edu/search_advanced.php?cur_cat_oid=23&search_database=Search&filter%5Bkeyword%5D=${encodeURIComponent(keyword)}&filter%5Bexact_match%5D=1`
+
+const UPPER_GE_URL = "https://www.sjsu.edu/general-education/ge-requirements/upper-division.php"
 
 export const ROADMAP: RoadmapTerm[] = [
   {
     year: "YEAR 3 · FALL",
     term: "Fall 2026",
     courses: [
-      { code: "CS 149", title: "Operating Systems", kind: "critical" },
-      { code: "CS 158A", title: "Computer Networks", kind: "ds" },
-      { code: "CS 100W", title: "Technical Writing gateway", kind: "critical" },
-      { code: "MATH 39 / 161A", title: "Fill the math gap", kind: "ds" },
+      { code: "CS 149", title: "Operating Systems", kind: "critical", id: "cs149", url: catalog("CS 149") },
+      { code: "CS 158A", title: "Computer Networks", kind: "ds", id: "cs158a", url: catalog("CS 158A") },
+      { code: "GE AREA R", title: "Upper-division GE · online", kind: "plain", id: "ge-r", url: UPPER_GE_URL },
+      { code: "GE AREA S", title: "Upper-division GE · online", kind: "plain", id: "ge-s", url: UPPER_GE_URL },
+      { code: "GE AREA V", title: "Upper-division GE · online", kind: "plain", id: "ge-v", url: UPPER_GE_URL },
     ],
     noteTitle: "If a waitlist does not clear",
-    note: "Use CS 157A first, then CS 147, then another required core. Keep one lighter requirement beside CS 149.",
+    note: "Use CS 157A first, then CS 147, then another required core. The three online GE sections are locked in, and math plus lower-division GE are already complete.",
   },
   {
     year: "YEAR 3 · SPRING",
     term: "Spring 2027",
     courses: [
-      { code: "CS 147", title: "Computer Architecture", kind: "critical" },
-      { code: "CS 157A", title: "Database Management", kind: "critical" },
-      { code: "CS 152", title: "Programming Paradigms", kind: "critical" },
-      { code: "CS 133", title: "Data Visualization", kind: "ds" },
+      { code: "CS 147", title: "Computer Architecture", kind: "critical", id: "cs147", url: catalog("CS 147") },
+      { code: "CS 157A", title: "Database Management", kind: "critical", id: "cs157a", url: catalog("CS 157A") },
+      { code: "CS 152", title: "Programming Paradigms", kind: "critical", id: "cs152", url: catalog("CS 152") },
+      { code: "CS 100W", title: "Technical Writing gateway", kind: "critical", id: "cs100w", url: catalog("CS 100W") },
     ],
     noteTitle: "Workload valve",
-    note: "Four technical courses is aggressive. Move CS 133 to Fall 2027 if the rest of your degree audit is already dense.",
+    note: "CS 133 moved to Fall 2027 so CS 100W fits here. Completing 100W by spring keeps CS 160 unblocked for senior year.",
   },
   {
     year: "YEAR 4 · FALL",
     term: "Fall 2027",
     courses: [
-      { code: "CS 160", title: "Software Engineering", kind: "critical" },
-      { code: "CS 154", title: "Formal Languages", kind: "critical" },
-      { code: "CS 171", title: "Machine Learning", kind: "ds" },
-      { code: "LIGHTER", title: "GE / science / deferred CS 133", kind: "plain" },
+      { code: "CS 160", title: "Software Engineering", kind: "critical", id: "cs160", url: catalog("CS 160") },
+      { code: "CS 154", title: "Formal Languages", kind: "critical", id: "cs154", url: catalog("CS 154") },
+      { code: "CS 171", title: "Machine Learning", kind: "ds", id: "cs171", url: catalog("CS 171") },
+      { code: "CS 133", title: "Data Visualization", kind: "ds", id: "cs133", url: catalog("CS 133") },
     ],
     noteTitle: "Sequence protection",
-    note: "Completing CS 100W earlier keeps CS 160 from becoming a graduation bottleneck.",
+    note: "CS 100W done in Spring 2027 keeps CS 160 from becoming a graduation bottleneck. CS 133 lands here from spring.",
   },
   {
     year: "YEAR 4 · SPRING",
     term: "Spring 2028",
     courses: [
-      { code: "CS 166", title: "Information Security", kind: "critical" },
-      { code: "CS 157C", title: "NoSQL / distributed data", kind: "ds" },
-      { code: "CS 122 / 131", title: "Python or Big Data", kind: "ds" },
-      { code: "AUDIT GAPS", title: "Remaining elective / GE / science", kind: "plain" },
+      { code: "CS 166", title: "Information Security", kind: "critical", id: "cs166", url: catalog("CS 166") },
+      { code: "CS 157C", title: "NoSQL / distributed data", kind: "ds", id: "cs157c", url: catalog("CS 157C") },
+      { code: "CS 122 / 131", title: "Python or Big Data", kind: "ds", id: "cs122-131", url: catalog("CS 122") },
+      { code: "ELECTIVES", title: "Remaining upper-division electives", kind: "plain", id: "electives-final" },
     ],
     noteTitle: "Catalog-year check",
     note: "A likely 2024–25 audit asks for 14 elective units; the current catalog asks for 17. MyProgress decides yours.",
@@ -518,7 +557,7 @@ export const ELECTIVES: ElectiveInfo[] = [
   { course: "CS 122", capability: "Advanced Python", payoff: "Stronger software habits for data tooling and substantial Python projects.", signal: "Practical elective" },
   { course: "CS 157C", capability: "Distributed / NoSQL data", payoff: "CAP, replication, sharding, cloud, and system tradeoffs after CS 157A.", signal: "Data engineering lane" },
   { course: "CS 131", capability: "Big-data tooling", payoff: "Unix pipelines, shell, reproducibility, and data-intensive computation.", signal: "Data engineering lane" },
-  { course: "MATH 161A", capability: "Probability & statistics", payoff: "Inference, confidence intervals, and hypothesis testing for responsible analysis.", signal: "Best math choice if available" },
+  { course: "MATH 161A", capability: "Probability & statistics", payoff: "Inference, confidence intervals, and hypothesis testing for responsible analysis.", signal: "Optional elective · math requirement met" },
 ]
 
 export const SOURCES: SourceInfo[] = [
@@ -675,5 +714,26 @@ export const SOURCES: SourceInfo[] = [
     description: "Primary API reference for the language explicitly required in Ishigaki's Summer 2026 CS 158A section.",
     meta: "Python Software Foundation",
     url: "https://docs.python.org/3/library/socket.html",
+  },
+  {
+    type: "resource",
+    title: "Unix Processes in C · video series",
+    description: "CodeVault's fork/exec/wait/pipe walkthroughs in C — the visual companion to the CS 149 process and IPC modules.",
+    meta: "YouTube · CodeVault",
+    url: "https://www.youtube.com/playlist?list=PLfqABt5AS4FkW5mOn2Tn9ZZLLDwA3kZUY",
+  },
+  {
+    type: "resource",
+    title: "Networking tutorial · video series",
+    description: "Ben Eater's hands-on series from signals to TCP — packet-level intuition for the CS 158A modules.",
+    meta: "YouTube · Ben Eater",
+    url: "https://www.youtube.com/playlist?list=PLowKtXNTBypH19whXTVoG3oKSuOcw_XeW",
+  },
+  {
+    type: "resource",
+    title: "Subnetting Mastery · video series",
+    description: "Practical Networking's seven-part subnetting series — the fastest route to reliable CIDR hand calculation.",
+    meta: "YouTube · Practical Networking",
+    url: "https://www.youtube.com/playlist?list=PLIFyRwBY_4bQUE4IB5c4VPRyDoLgOdExE",
   },
 ]

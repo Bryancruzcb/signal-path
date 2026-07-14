@@ -56,10 +56,7 @@ import {
   ELECTIVES,
   SOURCES,
 } from './data/sjsuData'
-import {
-  resources as sdsuResources,
-  careerEvents as sdsuCareerEvents,
-} from './data/roadmap'
+import { resources as roadmapResources } from './data/roadmap'
 import './App.css'
 
 
@@ -99,6 +96,17 @@ const storage = {
   modules: 'third-year-lab-modules-v1',
   knownCourses: 'third-year-lab-known-v1',
   activeCourse: 'third-year-lab-active-course-v1',
+  focusLog: 'third-year-lab-focus-log-v1',
+}
+
+const FALL_2026_FIRST_DAY = '2026-08-19' // SJSU registrar: first day of Fall 2026 instruction
+const INTERNSHIP_APPS_OPEN = '2026-08-01' // estimate: big-tech Summer 2027 postings historically start early August
+
+function daysUntil(dateString: string) {
+  const target = new Date(`${dateString}T00:00:00`)
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  return Math.max(0, Math.round((target.getTime() - now.getTime()) / 86_400_000))
 }
 
 const statusOptions: ApplicationStatus[] = [
@@ -157,8 +165,10 @@ function getInitialPath(): PathId {
 }
 
 function getInitialView(): AppWorkspaceView {
-  const routeView = window.location.hash.replace(/^#\/?/, '').split('/')[1]
-  if (isWorkspaceView(routeView)) return routeView
+  // Current format is #/<view>; legacy links used #/<path>/<view>.
+  const [first, second] = window.location.hash.replace(/^#\/?/, '').split('/')
+  if (isWorkspaceView(first)) return first
+  if (isWorkspaceView(second)) return second
   const storedView = localStorage.getItem(storage.view)
   if (isWorkspaceView(storedView)) return storedView
   return 'dashboard'
@@ -206,7 +216,6 @@ function App() {
   // --- States ---
   const [selectedPath, setSelectedPath] = useState<PathId>(getInitialPath)
   const [activeView, setActiveView] = useState<AppWorkspaceView>(getInitialView)
-  const [campusTab, setCampusTab] = useState<'sjsu' | 'sdsu'>('sjsu')
   const [completedTasks, setCompletedTasks] = useState<string[]>(() => readArray(storage.tasks))
   const [resourceStates, setResourceStates] = useState<Record<string, ResourceStatus>>(() =>
     readObject<Record<string, ResourceStatus>>(storage.resourceStates, {})
@@ -237,6 +246,9 @@ function App() {
   })
   const [activeCourse, setActiveCourse] = useState<string>(() =>
     localStorage.getItem(storage.activeCourse) ?? 'cs149'
+  )
+  const [focusLog, setFocusLog] = useState<{ minutes: number; sessions: number }>(() =>
+    readObject<{ minutes: number; sessions: number }>(storage.focusLog, { minutes: 0, sessions: 0 })
   )
 
   // Timer state
@@ -273,7 +285,7 @@ function App() {
     const generalKeys = new Set(
       general.flatMap((res) => [res.id, res.title.trim().toLowerCase()])
     )
-    const sdsuMapped = sdsuResources
+    const roadmapMapped = roadmapResources
       .filter((res) => {
         if (generalKeys.has(res.id) || generalKeys.has(res.title.trim().toLowerCase())) return false
         const mappedTracks: string[] = []
@@ -300,7 +312,7 @@ function App() {
         evidence: res.evidence,
         verified: 'July 2026',
       }))
-    return [...general, ...sdsuMapped]
+    return [...general, ...roadmapMapped]
   }, [selectedPath])
   const pathApplications = applications.filter((application) => application.pathId === selectedPath)
   const pathSignals = recruitingSignals.filter((signal) => signal.pathIds.includes(selectedPath))
@@ -376,6 +388,7 @@ function App() {
   useEffect(() => localStorage.setItem(storage.modules, JSON.stringify(modulesCompleted)), [modulesCompleted])
   useEffect(() => localStorage.setItem(storage.knownCourses, JSON.stringify(knownCourses)), [knownCourses])
   useEffect(() => localStorage.setItem(storage.activeCourse, activeCourse), [activeCourse])
+  useEffect(() => localStorage.setItem(storage.focusLog, JSON.stringify(focusLog)), [focusLog])
 
   // Focus Timer effect
   useEffect(() => {
@@ -385,6 +398,7 @@ function App() {
         if (prev <= 1) {
           clearInterval(interval)
           setTimerRunning(false)
+          setFocusLog((log) => ({ minutes: log.minutes + 25, sessions: log.sessions + 1 }))
           setToast("Focus block complete. Write down what surprised you before opening another tab.")
           return 0
         }
@@ -396,19 +410,25 @@ function App() {
 
   useEffect(() => {
     const handleHash = () => {
-      const [path, view] = window.location.hash.replace(/^#\/?/, '').split('/')
-      if (isPathId(path)) setSelectedPath(path)
-      if (isWorkspaceView(view)) setActiveView(view)
+      const segments = window.location.hash.replace(/^#\/?/, '').split('/')
+      // Current format is #/<view>; legacy links used #/<path>/<view>.
+      const [first, second] = segments
+      if (isPathId(first)) {
+        setSelectedPath(first)
+        if (isWorkspaceView(second)) setActiveView(second)
+      } else if (isWorkspaceView(first)) {
+        setActiveView(first)
+      }
     }
     window.addEventListener('hashchange', handleHash)
     return () => window.removeEventListener('hashchange', handleHash)
   }, [])
 
   useEffect(() => {
-    const expectedHash = `#/${selectedPath}/${activeView}`
+    const expectedHash = `#/${activeView}`
     if (window.location.hash !== expectedHash) window.history.replaceState(null, '', expectedHash)
     document.title = `${profile.shortName} · Signal Path`
-  }, [activeView, profile.shortName, selectedPath])
+  }, [activeView, profile.shortName])
 
   useEffect(() => {
     if (!toast) return undefined
@@ -432,7 +452,7 @@ function App() {
   function navigate(view: AppWorkspaceView, path: PathId = selectedPath) {
     setSelectedPath(path)
     setActiveView(view)
-    window.location.hash = `/${path}/${view}`
+    window.location.hash = `/${view}`
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -440,7 +460,6 @@ function App() {
     setSelectedPath(path)
     const name = pathProfiles.find((item) => item.id === path)?.shortName
     setToast(`${name} workspace loaded.`)
-    window.location.hash = `/${path}/${activeView}`
   }
 
   function toggleTask(id: string) {
@@ -786,6 +805,27 @@ function App() {
                 <small>/ 100</small>
               </div>
             </header>
+
+            {/* Signal meters: logged focus time + the two clocks that matter */}
+            <section className="signal-meters" aria-label="Progress meters and countdowns">
+              <button type="button" className="signal-meter" onClick={() => document.querySelector('.focus-bench')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
+                <span className="mono-label">FOCUS LOGGED</span>
+                <strong>{(focusLog.minutes / 60).toFixed(1)}<small> h</small></strong>
+                <span className="signal-meter-note">
+                  {focusLog.sessions === 0 ? 'Finish one 25-minute block to start the log' : `${focusLog.sessions} completed block${focusLog.sessions === 1 ? '' : 's'} · 25m each`}
+                </span>
+              </button>
+              <button type="button" className="signal-meter" onClick={() => navigate('academic-plan')}>
+                <span className="mono-label">FALL 2026 CLASSES</span>
+                <strong>{daysUntil(FALL_2026_FIRST_DAY)}<small> days</small></strong>
+                <span className="signal-meter-note">Instruction starts Aug 19 · CS 149, CS 158A, GE R/S/V</span>
+              </button>
+              <button type="button" className="signal-meter" onClick={() => navigate('outreach-applications')}>
+                <span className="mono-label">SUMMER 2027 APPS</span>
+                <strong>{daysUntil(INTERNSHIP_APPS_OPEN)}<small> days</small></strong>
+                <span className="signal-meter-note">Est. early Aug — big-tech postings open first; verify per company</span>
+              </button>
+            </section>
 
             <div className="dashboard-grid">
               {/* Weekly Systems Sprint */}
@@ -1137,27 +1177,65 @@ function App() {
 
             {/* Roadmap Timeline */}
             <div className="roadmap-timeline" id="roadmapTimeline" style={{ display: 'grid', gap: '16px' }}>
-              {ROADMAP.map((term) => (
-                <article className="term-row" key={term.term}>
-                  <div className="term-label">
-                    <span>{term.year}</span>
-                    <strong>{term.term}</strong>
-                  </div>
-                  <div className="term-courses">
-                    {term.courses.map((course) => (
-                      <span
-                        className={`roadmap-course ${course.kind === 'ds' ? 'is-ds' : course.kind === 'critical' ? 'is-critical' : ''}`}
-                        key={course.code}
-                      >
-                        <strong>{course.code}</strong> {course.title}
+              {ROADMAP.map((term) => {
+                const trackable = term.courses.filter((course) => course.id)
+                const doneCount = trackable.filter((course) => knownCourses[course.id as string]).length
+                return (
+                  <article className="term-row" key={term.term}>
+                    <div className="term-label">
+                      <span>{term.year}</span>
+                      <strong>{term.term}</strong>
+                      <span className={`term-progress ${doneCount === trackable.length && trackable.length > 0 ? 'is-complete' : ''}`}>
+                        {trackable.length > 0 && doneCount === trackable.length
+                          ? '✓ Term complete'
+                          : `${doneCount} of ${trackable.length} done`}
                       </span>
-                    ))}
-                  </div>
-                  <p className="term-note">
-                    <strong>{term.noteTitle}</strong> {term.note}
-                  </p>
-                </article>
-              ))}
+                    </div>
+                    <div className="term-courses">
+                      {term.courses.map((course) => {
+                        const isDone = Boolean(course.id && knownCourses[course.id])
+                        return (
+                          <span
+                            className={`roadmap-course ${course.kind === 'ds' ? 'is-ds' : course.kind === 'critical' ? 'is-critical' : ''} ${isDone ? 'is-done' : ''}`}
+                            key={course.code}
+                          >
+                            {course.id ? (
+                              <button
+                                type="button"
+                                className="roadmap-course-toggle"
+                                aria-pressed={isDone}
+                                title={isDone ? `Mark ${course.code} as not completed` : `Mark ${course.code} as completed`}
+                                onClick={() => toggleKnownCourse(course.id as string)}
+                              >
+                                <span className="roadmap-course-check" aria-hidden="true">{isDone ? '✓' : ''}</span>
+                                <strong>{course.code}</strong> {course.title}
+                              </button>
+                            ) : (
+                              <>
+                                <strong>{course.code}</strong> {course.title}
+                              </>
+                            )}
+                            {course.url && (
+                              <a
+                                className="roadmap-course-link"
+                                href={course.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={`Open ${course.code} details in a new tab`}
+                              >
+                                <ArrowUpRight size={12} />
+                              </a>
+                            )}
+                          </span>
+                        )
+                      })}
+                    </div>
+                    <p className="term-note">
+                      <strong>{term.noteTitle}</strong> {term.note}
+                    </p>
+                  </article>
+                )
+              })}
             </div>
 
             <div className="roadmap-footer-note" style={{ display: 'flex', gap: '10px', marginTop: '24px', padding: '16px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-sm)', color: 'var(--muted)', fontSize: '0.84rem' }}>
@@ -1187,12 +1265,29 @@ function App() {
 
               {/* Skill constellation */}
               <section className="skill-constellation" aria-labelledby="constellation-heading" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px', marginBottom: '48px' }}>
-                {SKILLS.map((skill) => (
-                  <div className="skill-node" key={skill.title} style={{ padding: '20px', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <strong style={{ fontSize: '1.05rem', color: 'var(--ink)' }}>{skill.title}</strong>
-                    <span style={{ fontSize: '0.84rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{skill.detail}</span>
-                  </div>
-                ))}
+                {SKILLS.map((skill) => {
+                  const goesToCoursePrep = skill.title === 'Systems'
+                  return (
+                    <button
+                      type="button"
+                      className="skill-node skill-node-button"
+                      key={skill.title}
+                      onClick={() => {
+                        if (goesToCoursePrep) {
+                          navigate('courses')
+                        } else {
+                          document.getElementById('elective-lens-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                      }}
+                    >
+                      <strong style={{ fontSize: '1.05rem', color: 'var(--ink)' }}>{skill.title}</strong>
+                      <span style={{ fontSize: '0.84rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{skill.detail}</span>
+                      <span className="skill-node-hint" aria-hidden="true">
+                        {goesToCoursePrep ? 'Open course prep →' : 'See matching electives ↓'}
+                      </span>
+                    </button>
+                  )
+                })}
               </section>
 
               {/* Portfolio bridge stages */}
@@ -1258,29 +1353,12 @@ function App() {
                 <p className="mono-label">UNIVERSITY RESOURCES & PORTALS</p>
                 <h2 style={{ fontSize: '2.5rem', margin: '0' }}>Campus Signals & Requirements</h2>
                 <p style={{ marginTop: '8px', color: 'var(--ink-soft)' }}>
-                  Switch between SJSU waitlist/catalog information and SDSU career/research portal links.
+                  SJSU degree-audit, catalog, and career portals in one place.
                 </p>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', alignSelf: 'center' }}>
-                <button
-                  type="button"
-                  className={`button ${campusTab === 'sjsu' ? 'button-primary' : 'button-secondary'}`}
-                  onClick={() => setCampusTab('sjsu')}
-                >
-                  SJSU Portal
-                </button>
-                <button
-                  type="button"
-                  className={`button ${campusTab === 'sdsu' ? 'button-primary' : 'button-secondary'}`}
-                  onClick={() => setCampusTab('sdsu')}
-                >
-                  SDSU Portal
-                </button>
               </div>
             </header>
 
-            {campusTab === 'sjsu' ? (
-              <div className="campus-sjsu-view" style={{ display: 'grid', gap: '32px' }}>
+            <div className="campus-sjsu-view" style={{ display: 'grid', gap: '32px' }}>
                 <section>
                   <p className="mono-label">DEGREE AUDIT & PORTAL RIGHTS</p>
                   <h3 style={{ fontSize: '1.4rem', marginTop: '0', marginBottom: '16px' }}>SJSU Degree Requirements</h3>
@@ -1367,54 +1445,6 @@ function App() {
                   </article>
                 </section>
               </div>
-            ) : (
-              <div className="campus-sdsu-view" style={{ display: 'grid', gap: '32px' }}>
-                <section>
-                  <p className="mono-label">CAREER PORTALS & RESEARCH</p>
-                  <h3 style={{ fontSize: '1.4rem', marginTop: '0', marginBottom: '16px' }}>SDSU Career &amp; Mentoring Resources</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                    {sdsuResources
-                      .filter((res) => res.id.startsWith('sdsu-') || res.id === 'san-diego-data')
-                      .map((res) => (
-                        <article className="card" key={res.id} style={{ padding: '20px', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <span className="evidence-pill evidence-official">{res.provider}</span>
-                          <strong style={{ fontSize: '1.1rem' }}>{res.title}</strong>
-                          <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0' }}>
-                            {res.why}
-                          </p>
-                          <a href={res.url} target="_blank" rel="noreferrer" className="button button-secondary" style={{ alignSelf: 'start', marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem' }}>
-                            <span>Open link</span>
-                            <ArrowUpRight size={14} />
-                          </a>
-                        </article>
-                      ))}
-                  </div>
-                </section>
-
-                <section style={{ borderTop: '1px solid var(--line)', paddingTop: '32px' }}>
-                  <p className="mono-label">RECRUITING EVENTS</p>
-                  <h3 style={{ fontSize: '1.4rem', marginTop: '0', marginBottom: '16px' }}>SDSU Career Calendar</h3>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {sdsuCareerEvents.map((evt) => (
-                      <article className="card" key={evt.id} style={{ display: 'flex', padding: '16px 20px', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', background: 'var(--surface)', alignItems: 'center', gap: '20px' }}>
-                        <div style={{ minWidth: '80px', fontFamily: 'var(--font-mono)', fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--path-accent)' }}>
-                          {evt.date}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <span className="mono-label" style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>{evt.type}</span>
-                          <strong style={{ display: 'block', fontSize: '1.05rem', marginTop: '2px' }}>{evt.title}</strong>
-                          <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: 'var(--ink-soft)' }}>{evt.action}</p>
-                        </div>
-                        <a href={evt.url} target="_blank" rel="noreferrer" className="button button-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem' }}>
-                          <span>Details</span>
-                          <ArrowUpRight size={14} />
-                        </a>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              </div>
-            )}
           </section>
         )}
 

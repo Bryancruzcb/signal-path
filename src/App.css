@@ -310,7 +310,8 @@ p {
   width: calc(100% - var(--sidebar-width));
   max-width: 1540px;
   min-height: 100vh;
-  margin-left: var(--sidebar-width);
+  /* Center the content column in the space beside the fixed sidebar. */
+  margin-left: max(var(--sidebar-width), calc((100% - 1540px + var(--sidebar-width)) / 2));
   padding: 0 42px 72px;
   flex-grow: 1;
 }
@@ -1028,6 +1029,73 @@ p {
   color: oklch(0.4 0.1 20);
 }
 
+.roadmap-course {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roadmap-course-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.roadmap-course-check {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  line-height: 1;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.roadmap-course.is-done {
+  opacity: 0.62;
+}
+
+.roadmap-course.is-done .roadmap-course-toggle strong,
+.roadmap-course.is-done .roadmap-course-toggle {
+  text-decoration: line-through;
+}
+
+.roadmap-course:hover:not(.is-done) {
+  border-color: var(--line-strong);
+}
+
+.roadmap-course-link {
+  display: inline-grid;
+  place-items: center;
+  color: inherit;
+  opacity: 0.55;
+}
+
+.roadmap-course-link:hover {
+  opacity: 1;
+}
+
+.term-progress {
+  margin-top: 6px;
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+.term-progress.is-complete {
+  color: var(--primary);
+  font-weight: 600;
+}
+
 .term-note {
   font-size: 0.78rem;
   color: var(--muted);
@@ -1054,6 +1122,83 @@ p {
 .skill-node span {
   font-family: var(--font-mono);
   font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.skill-node-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.skill-node-button:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+
+.skill-node-hint {
+  margin-top: auto;
+  font-size: 0.72rem;
+  color: var(--primary);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.skill-node-button:hover .skill-node-hint,
+.skill-node-button:focus-visible .skill-node-hint {
+  opacity: 1;
+}
+
+/* Dashboard signal meters */
+.signal-meters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 36px;
+}
+
+.signal-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.signal-meter:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+
+.signal-meter strong {
+  font-size: 2.1rem;
+  line-height: 1.1;
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+.signal-meter strong small {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.signal-meter-note {
+  font-size: 0.78rem;
   color: var(--muted);
 }
 

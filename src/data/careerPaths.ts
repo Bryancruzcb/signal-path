@@ -538,7 +538,7 @@ export const resources: LearningResource[] = [
     level: 'Intermediate',
     url: 'https://datatalks.club/docs/courses/data-engineering-zoomcamp/',
     why: 'A free, end-to-end spine covering containers, orchestration, warehousing, transformation, batch, and streaming.',
-    action: 'Follow the current self-paced cohort and adapt the final project to a San Diego public-data question.',
+    action: 'Follow the current self-paced cohort and adapt the final project to a San José public-data question.',
     kind: 'Primary spine',
     evidence: 'Community',
     verified,
@@ -1498,7 +1498,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
     {
       id: 'de-portfolio',
       index: '05',
-      title: 'Ship the MTS pipeline and recruit',
+      title: 'Ship the VTA pipeline and recruit',
       window: 'Weeks 16–20',
       purpose: 'Package reliability evidence and start interviewing for data platform and backend-data roles.',
       milestone: 'The Civic Pulse pipeline deploys cleanly, passes tests, and has a practiced architecture story.',
@@ -1506,7 +1506,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
         {
           id: 'de-portfolio-ship',
           title: 'Finish Civic Pulse',
-          detail: 'Use San Diego MTS data to show ingestion, modeling, tests, orchestration, observability, and one consumer view.',
+          detail: 'Use VTA GTFS data to show ingestion, modeling, tests, orchestration, observability, and one consumer view.',
           effort: '25–35 hours',
           output: 'Deployed project, docs site, runbook, and three failure demonstrations.',
           resourceIds: ['de-zoomcamp', 'dbt-fundamentals', 'airflow-tutorial'],
@@ -1572,7 +1572,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
       title: 'Build a usable product slice',
       window: 'Weeks 4–7',
       purpose: 'Connect accessible UI, state, API behavior, and a relational model around one real workflow.',
-      milestone: 'Aztec Build Board supports its first complete user journey.',
+      milestone: 'Spartan Build Board supports its first complete user journey.',
       tasks: [
         {
           id: 'swe-product-ui',
@@ -1678,8 +1678,8 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
       tasks: [
         {
           id: 'swe-recruit-project',
-          title: 'Finish Aztec Build Board',
-          detail: 'Recruit five SDSU users, observe the primary flow, fix the largest friction, and report the change.',
+          title: 'Finish Spartan Build Board',
+          detail: 'Recruit five SJSU users, observe the primary flow, fix the largest friction, and report the change.',
           effort: '15–20 hours',
           output: 'A case study with user evidence, architecture, tests, and production lessons.',
           resourceIds: ['full-stack-open', 'playwright-docs'],
@@ -2021,7 +2021,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
       index: '05',
       title: 'Package evidence and join the community',
       window: 'Weeks 17–20',
-      purpose: 'Present defensive work responsibly, practice scenarios, and build local signal through SDSU.',
+      purpose: 'Present defensive work responsibly, practice scenarios, and build local signal through SJSU.',
       milestone: 'Mini SOC is public without sensitive data, and six incident stories are ready for interviews.',
       tasks: [
         {
@@ -2042,8 +2042,8 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
         },
         {
           id: 'cyber-portfolio-campus',
-          title: 'Join SDSU Cyber Defense Team',
-          detail: 'Attend, ask where beginners contribute, and volunteer for a documented lab, competition, or workshop task.',
+          title: 'Join an SJSU security club',
+          detail: 'Find a security or cyber club in the student-org directory, ask where beginners contribute, and volunteer for a documented lab, competition, or workshop task.',
           effort: '2–4 hours / week',
           output: 'One team contribution and two practitioner conversations monthly.',
           resourceIds: ['cisco-netacad'],
@@ -2264,12 +2264,12 @@ export const projectsByPath: Record<PathId, CareerProject[]> = {
       datasetLabel: 'Google Analytics 4 obfuscated sample e-commerce events',
     },
     {
-      id: 'ds-san-diego-service-case',
+      id: 'ds-san-jose-service-case',
       pathId: 'data-science',
-      title: 'San Diego Service Equity Brief',
+      title: 'San José Service Equity Brief',
       label: 'Portfolio · civic decision case',
       pitch:
-        'Analyze Get It Done service requests to identify where response-time gaps are operationally meaningful without overstating causal conclusions.',
+        'Analyze 311 service requests to identify where response-time gaps are operationally meaningful without overstating causal conclusions.',
       decision: 'Which request category and geography should city operations investigate first, and what service-level metric should improve?',
       time: '2–3 weeks',
       difficulty: 'Intermediate',
@@ -2292,9 +2292,9 @@ export const projectsByPath: Record<PathId, CareerProject[]> = {
         'Show how the recommendation changes under one alternate definition.',
       ],
       resumeLine:
-        'Analyzed San Diego service-request volume and tail resolution time with reproducible SQL and geospatial views; prioritized an operational follow-up with explicit data limitations.',
-      datasetUrl: 'https://data.sandiego.gov/datasets/get-it-done-311/',
-      datasetLabel: 'City of San Diego Get It Done 311 data',
+        'Analyzed San José service-request volume and tail resolution time with reproducible SQL and geospatial views; prioritized an operational follow-up with explicit data limitations.',
+      datasetUrl: 'https://data.sanjoseca.gov/',
+      datasetLabel: 'City of San José 311 service-request data',
     },
   ],
 
@@ -2302,10 +2302,10 @@ export const projectsByPath: Record<PathId, CareerProject[]> = {
     {
       id: 'de-civic-pulse',
       pathId: 'data-engineering',
-      title: 'Civic Pulse: San Diego Transit Pipeline',
+      title: 'Civic Pulse: San José Transit Pipeline',
       label: 'Flagship · batch pipeline + data quality',
       pitch:
-        'Ingest San Diego MTS schedule data into a tested transit warehouse that can answer service-frequency and accessibility questions reliably.',
+        'Ingest VTA schedule data into a tested transit warehouse that can answer service-frequency and accessibility questions reliably.',
       decision: 'Where and when does scheduled transit frequency create the clearest service gap for a rider-facing product?',
       time: '5–7 weeks',
       difficulty: 'Advanced',
@@ -2330,9 +2330,9 @@ export const projectsByPath: Record<PathId, CareerProject[]> = {
         'Explain what would change at 100× data volume or a five-minute freshness target.',
       ],
       resumeLine:
-        'Engineered an idempotent San Diego transit pipeline with Airflow, dbt, PostgreSQL, and containerized quality checks; documented lineage, backfills, and failure recovery.',
-      datasetUrl: 'https://www.sdmts.com/google-transit-feed',
-      datasetLabel: 'San Diego MTS General Transit Feed Specification data',
+        'Engineered an idempotent San José transit pipeline with Airflow, dbt, PostgreSQL, and containerized quality checks; documented lineage, backfills, and failure recovery.',
+      datasetUrl: 'https://www.vta.org/open-data-portal',
+      datasetLabel: 'VTA (Santa Clara Valley Transportation Authority) General Transit Feed Specification data',
     },
     {
       id: 'de-batch-stream-lab',
@@ -2370,12 +2370,12 @@ export const projectsByPath: Record<PathId, CareerProject[]> = {
 
   swe: [
     {
-      id: 'swe-aztec-build-board',
+      id: 'swe-spartan-build-board',
       pathId: 'swe',
-      title: 'Aztec Build Board',
+      title: 'Spartan Build Board',
       label: 'Flagship · collaborative full-stack product',
       pitch:
-        'Help SDSU students form project teams, define build milestones, and show credible progress before internship season.',
+        'Help SJSU students form project teams, define build milestones, and show credible progress before internship season.',
       decision: 'Which collaboration workflow gets a student from idea to a committed first teammate with the least friction?',
       time: '5–7 weeks',
       difficulty: 'Advanced',
@@ -2720,13 +2720,13 @@ export const recruitingSignals: Array<{
     tag: 'Role calibration',
   },
   {
-    id: 'sdsu-cyber-defense',
+    id: 'sjsu-cyber-club',
     pathIds: ['cyber'],
-    title: 'SDSU Cyber Defense Team',
+    title: 'SJSU security and cyber clubs',
     detail:
-      'Local, current campus route to authorized labs, competitions, workshops, teammates, and practitioner signal. Check meeting and membership details directly with the team.',
-    url: 'https://www.sdsucyberdefense.org/',
-    source: 'SDSU Cyber Defense Team',
+      'Local, current campus route to authorized labs, competitions, workshops, teammates, and practitioner signal. Find a security or cyber club in the recognized student-org directory and check meeting details directly with the club.',
+    url: 'https://www.sjsu.edu/getinvolved/student-orgs/index.php',
+    source: 'SJSU Student Involvement',
     tag: 'Campus advantage',
   },
 ]

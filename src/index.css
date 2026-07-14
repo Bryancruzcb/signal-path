@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  color: oklch(18% 0.018 252);
+  background: oklch(96% 0.004 252);
+  font-family: 'Archivo', 'Avenir Next', Avenir, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 150px;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: oklch(97.5% 0.004 92);
+}
+
+button,
+input,
+select { font: inherit; }
+
+button,
+a,
+select,
+input[type='checkbox'] { -webkit-tap-highlight-color: transparent; }
+
+button { cursor: pointer; }
+
+a { color: inherit; }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid oklch(63% 0.22 29);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: oklch(16% 0.018 252);
+  background: oklch(83% 0.14 83);
+}

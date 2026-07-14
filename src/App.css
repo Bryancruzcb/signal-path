@@ -235,7 +235,6 @@ p {
 }
 
 .sidebar-progress {
-  margin-top: auto;
   padding: 20px 8px 18px;
   border-top: 1px solid var(--line);
 }
@@ -1200,6 +1199,36 @@ p {
 .signal-meter-note {
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+/* Sidebar live meters */
+.sidebar-meters {
+  display: grid;
+  gap: 6px;
+  margin-top: auto;
+  padding: 14px 8px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.sidebar-meter {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sidebar-meter span {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.sidebar-meter strong {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--ink);
 }
 
 .project-stage {

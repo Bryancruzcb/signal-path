@@ -109,6 +109,15 @@ function daysUntil(dateString: string) {
   return Math.max(0, Math.round((target.getTime() - now.getTime()) / 86_400_000))
 }
 
+// "45m" → 45 · "2 hours" → 120 · "2–3 hours" → 120 (lower bound, honest accounting)
+function durationToMinutes(duration: string) {
+  const minutes = duration.match(/^(\d+)m$/)
+  if (minutes) return Number(minutes[1])
+  const hours = duration.match(/^(\d+)(?:\s*[–-]\s*\d+)?\s*hours?$/)
+  if (hours) return Number(hours[1]) * 60
+  return 0
+}
+
 const statusOptions: ApplicationStatus[] = [
   'Saved',
   'Applied',
@@ -333,6 +342,12 @@ function App() {
   const sjsuProgressPercent = totalCodexItems
     ? Math.round((totalCodexComplete / totalCodexItems) * 100)
     : 0
+
+  // Study time banked: finished focus blocks + every completed weekly task and lab
+  const studyMinutes =
+    focusLog.minutes +
+    WEEKLY_TASKS.filter((task) => weeklyTasksCompleted[task.id]).reduce((sum, task) => sum + durationToMinutes(task.duration), 0) +
+    allSjsuModules.filter((module) => modulesCompleted[module.id]).reduce((sum, module) => sum + durationToMinutes(module.duration), 0)
 
   // Combined Global Readiness Score (0 - 100)
   // Codex Formula: Math.min(100, Math.round(18 + (weeklyComplete / WEEKLY_TASKS.length) * 22 + (modulesComplete / moduleList.length) * 60))
@@ -704,6 +719,22 @@ function App() {
           </button>
         </nav>
 
+        {/* Live meters (mirrors the dashboard signal meters) */}
+        <div className="sidebar-meters" aria-label="Live progress meters">
+          <div className="sidebar-meter">
+            <span>Study banked</span>
+            <strong>{(studyMinutes / 60).toFixed(1)}h</strong>
+          </div>
+          <div className="sidebar-meter">
+            <span>Fall classes</span>
+            <strong>{daysUntil(FALL_2026_FIRST_DAY)}d</strong>
+          </div>
+          <div className="sidebar-meter">
+            <span>Apps open · est.</span>
+            <strong>{daysUntil(INTERNSHIP_APPS_OPEN)}d</strong>
+          </div>
+        </div>
+
         {/* Global Progress Panel */}
         <section className="sidebar-progress" aria-labelledby="sidebar-progress-title">
           <div className="progress-heading">
@@ -809,10 +840,12 @@ function App() {
             {/* Signal meters: logged focus time + the two clocks that matter */}
             <section className="signal-meters" aria-label="Progress meters and countdowns">
               <button type="button" className="signal-meter" onClick={() => document.querySelector('.focus-bench')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
-                <span className="mono-label">FOCUS LOGGED</span>
-                <strong>{(focusLog.minutes / 60).toFixed(1)}<small> h</small></strong>
+                <span className="mono-label">STUDY BANKED</span>
+                <strong>{(studyMinutes / 60).toFixed(1)}<small> h</small></strong>
                 <span className="signal-meter-note">
-                  {focusLog.sessions === 0 ? 'Finish one 25-minute block to start the log' : `${focusLog.sessions} completed block${focusLog.sessions === 1 ? '' : 's'} · 25m each`}
+                  {studyMinutes === 0
+                    ? 'Finish a focus block, weekly task, or lab to start the log'
+                    : `${focusLog.sessions} focus block${focusLog.sessions === 1 ? '' : 's'} + ${totalCodexComplete} finished item${totalCodexComplete === 1 ? '' : 's'}`}
                 </span>
               </button>
               <button type="button" className="signal-meter" onClick={() => navigate('academic-plan')}>

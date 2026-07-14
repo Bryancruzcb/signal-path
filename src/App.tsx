@@ -270,8 +270,12 @@ function App() {
   const projects = projectsByPath[selectedPath]
   const pathResources = useMemo(() => {
     const general = resources.filter((res) => res.pathIds.includes(selectedPath))
+    const generalKeys = new Set(
+      general.flatMap((res) => [res.id, res.title.trim().toLowerCase()])
+    )
     const sdsuMapped = sdsuResources
       .filter((res) => {
+        if (generalKeys.has(res.id) || generalKeys.has(res.title.trim().toLowerCase())) return false
         const mappedTracks: string[] = []
         if (selectedPath === 'data-science') mappedTracks.push('product')
         if (selectedPath === 'data-engineering') mappedTracks.push('engineering')
@@ -294,7 +298,7 @@ function App() {
         action: res.action,
         kind: res.category === 'Community' ? 'Community' : 'Reference',
         evidence: res.evidence,
-        verified: true,
+        verified: 'July 2026',
       }))
     return [...general, ...sdsuMapped]
   }, [selectedPath])
@@ -411,6 +415,18 @@ function App() {
     const timer = window.setTimeout(() => setToast(''), 3200)
     return () => window.clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => {
+    if (!openModuleId && !evidenceLegendOpen) return undefined
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenModuleId(null)
+        setEvidenceLegendOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [openModuleId, evidenceLegendOpen])
 
   // --- Handlers ---
   function navigate(view: AppWorkspaceView, path: PathId = selectedPath) {
@@ -1180,7 +1196,7 @@ function App() {
               </section>
 
               {/* Portfolio bridge stages */}
-              <section className="portfolio-bridge" aria-labelledby="portfolio-heading" style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '44px', marginBottom: '48px' }}>
+              <section className="portfolio-bridge" aria-labelledby="portfolio-heading">
                 <div className="portfolio-copy">
                   <p className="mono-label">ONE PROJECT, FOUR SEMESTERS</p>
                   <h3 id="portfolio-heading" style={{ fontSize: '1.5rem', marginTop: '0', marginBottom: '14px' }}>Build a campus data observatory.</h3>
@@ -1288,6 +1304,46 @@ function App() {
                       </p>
                       <a href="https://catalog.sjsu.edu/preview_program.php?catoid=23&poid=18783&returnto=8470" target="_blank" rel="noreferrer" className="button button-secondary" style={{ alignSelf: 'start', marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem' }}>
                         <span>Open Catalog</span>
+                        <ArrowUpRight size={14} />
+                      </a>
+                    </article>
+                  </div>
+                </section>
+
+                <section style={{ borderTop: '1px solid var(--line)', paddingTop: '32px' }}>
+                  <p className="mono-label">CAREER PORTALS</p>
+                  <h3 style={{ fontSize: '1.4rem', marginTop: '0', marginBottom: '16px' }}>SJSU Career &amp; Job-Search Resources</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                    <article className="card" style={{ padding: '20px', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <span className="evidence-pill evidence-official">Official Portal</span>
+                      <strong style={{ fontSize: '1.1rem' }}>SJSU Handshake</strong>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0' }}>
+                        SJSU's official internship and job board—employer messaging, career-fair registration, and on-campus recruiting.
+                      </p>
+                      <a href="https://sjsu.joinhandshake.com/" target="_blank" rel="noreferrer" className="button button-secondary" style={{ alignSelf: 'start', marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem' }}>
+                        <span>Open Handshake</span>
+                        <ArrowUpRight size={14} />
+                      </a>
+                    </article>
+                    <article className="card" style={{ padding: '20px', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <span className="evidence-pill evidence-official">Official Guide</span>
+                      <strong style={{ fontSize: '1.1rem' }}>SJSU Career Center</strong>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0' }}>
+                        Resume reviews, drop-in advising, employer events, and each term's career-fair calendar.
+                      </p>
+                      <a href="https://www.sjsu.edu/careercenter/" target="_blank" rel="noreferrer" className="button button-secondary" style={{ alignSelf: 'start', marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem' }}>
+                        <span>Open Career Center</span>
+                        <ArrowUpRight size={14} />
+                      </a>
+                    </article>
+                    <article className="card" style={{ padding: '20px', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <span className="evidence-pill evidence-official">Department</span>
+                      <strong style={{ fontSize: '1.1rem' }}>SJSU Computer Science</strong>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0' }}>
+                        Department advising contacts, announcements, and research opportunities for CS majors.
+                      </p>
+                      <a href="https://www.sjsu.edu/cs/" target="_blank" rel="noreferrer" className="button button-secondary" style={{ alignSelf: 'start', marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem' }}>
+                        <span>Open CS Department</span>
                         <ArrowUpRight size={14} />
                       </a>
                     </article>
@@ -1718,12 +1774,12 @@ function App() {
               </section>
             )}
 
-            <div className="application-layout" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '28px' }}>
+            <div className="application-layout">
               <section className="application-main">
                 {/* Application Form */}
                 <form id="application-form" className="application-form" onSubmit={addApplication} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', padding: '24px', background: 'var(--surface)', marginBottom: '32px' }}>
                   <h3 style={{ fontSize: '1.25rem', margin: '0 0 16px', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>Log an Application</h3>
-                  <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  <div className="form-grid">
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <span>Company *</span>
                       <input required value={company} onChange={(event) => setCompany(event.target.value)} placeholder="Company name" style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: '4px' }} />
@@ -1933,11 +1989,11 @@ function App() {
       {/* 1. Module Dialog Details */}
       {activeModule && activeModuleCourse && (
         <div className="dialog-overlay" style={{ position: 'fixed', inset: '0', zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'grid', placeItems: 'center', padding: '20px' }} onClick={() => setOpenModuleId(null)}>
-          <div className="dialog-shell" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', maxWidth: '640px', width: '100%', padding: '28px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+          <div className="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="module-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', maxWidth: '640px', width: '100%', padding: '28px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
             <header className="dialog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
               <div>
                 <span className="mono-label" style={{ color: 'var(--path-accent)' }}>{activeModuleCourse.code} · {activeModuleCourse.title}</span>
-                <h2 style={{ fontSize: '1.4rem', margin: '4px 0 0', fontWeight: '600' }}>{activeModule.title}</h2>
+                <h2 id="module-dialog-title" style={{ fontSize: '1.4rem', margin: '4px 0 0', fontWeight: '600' }}>{activeModule.title}</h2>
               </div>
               <button className="icon-button" type="button" aria-label="Close module" onClick={() => setOpenModuleId(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
                 <X size={20} />
@@ -1992,11 +2048,11 @@ function App() {
       {/* 2. Evidence Legend Dialog */}
       {evidenceLegendOpen && (
         <div className="dialog-overlay" style={{ position: 'fixed', inset: '0', zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'grid', placeItems: 'center', padding: '20px' }} onClick={() => setEvidenceLegendOpen(false)}>
-          <div className="dialog-shell" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', maxWidth: '520px', width: '100%', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+          <div className="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="legend-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', maxWidth: '520px', width: '100%', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
             <header className="dialog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
               <div>
                 <span className="mono-label">READING THE RESEARCH</span>
-                <h2 style={{ fontSize: '1.3rem', margin: '4px 0 0', fontWeight: '600' }}>Four levels of certainty</h2>
+                <h2 id="legend-dialog-title" style={{ fontSize: '1.3rem', margin: '4px 0 0', fontWeight: '600' }}>Four levels of certainty</h2>
               </div>
               <button className="icon-button" type="button" aria-label="Close evidence guide" onClick={() => setEvidenceLegendOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
                 <X size={20} />

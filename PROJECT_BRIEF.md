@@ -2,7 +2,7 @@
 
 ## One-Sentence Brief
 
-Build an evidence-based, interactive workspace that helps a rising SDSU computer science junior compare and pursue data science, data engineering, software engineering, Java backend, cybersecurity, and ML engineering internships before Summer 2027.
+Build an evidence-based, interactive workspace that helps a rising SJSU computer science junior compare and pursue data science, data engineering, software engineering, Java backend, cybersecurity, and ML engineering internships before Summer 2027 — while preparing for waitlisted SJSU systems courses.
 
 ## Honest Career Thesis
 
@@ -26,7 +26,7 @@ The default lane remains product analytics, but every path is a first-class work
 - Internship sprint and lightweight application tracker
 - Local progress persistence and export
 - Search and filters for courses, videos, books, practice, and communities
-- Current SDSU-specific actions and communities
+- Current campus-specific actions and communities (SJSU primary, SDSU secondary)
 - Responsive, accessible implementation
 
 ## Content Rules

@@ -1,26 +1,27 @@
 # Signal Path
 
-Signal Path is a private, browser-local career workspace for a rising third-year SDSU computer science student targeting Summer 2027 internships.
+A private, browser-local academic and career workspace for an SJSU computer science student: course-prep labs for waitlisted systems courses, a four-term academic plan, six first-class career tracks, a curated learning-resource stack, and a Summer 2027 internship application tracker. Everything persists in the browser's local storage — no account, no backend, no analytics.
 
-It now treats six career routes as first-class paths:
+## How this app came to be
 
-- Data Science (product analytics and experimentation)
-- Data Engineering
-- Software Engineering
-- Java Backend
-- Cybersecurity
-- Machine Learning Engineering
+Signal Path is the merge of three separately built dashboards into one workspace, keeping the best of each:
 
-Each path has a separate dashboard, curriculum, resource stack, two portfolio briefs, role-title bank, recruiting signals, and application tracker. Progress persists independently in local storage and can be exported as JSON.
+- **third-year-lab** — SJSU CS 149 / CS 158A waitlist-prep modules, the Focus Bench timer, the four-term academic roadmap, and the oklch design system (Figtree / Newsreader / IBM Plex Mono) the whole app now uses.
+- **Signal Path v1** — SDSU career-services portals, San Diego open-data resources, and the original three-track roadmap. Retained as the secondary "SDSU Portal" campus view.
+- **Signal Path v2** — six career tracks (Data Science, Data Engineering, Software Engineering, Java Backend, Cybersecurity, ML Engineering), each with a dated curriculum, curated resources, two flagship project briefs, role-title banks, and the application tracker.
 
-## Product decisions
+## Views
 
-- Apply while learning. Summer 2027 recruiting is already active as of July 2026.
-- Prefer one primary learning spine over stacked courses.
-- Finish one defensible flagship project before collecting tutorial projects.
-- Track tests, recovery behavior, trade-offs, and measurable outcomes—not only features.
-- Treat referrals as visibility leverage for a prepared candidate, never as a substitute for fit.
-- Keep cybersecurity practice inside owned systems, authorized scopes, and deliberately vulnerable labs.
+- **This week** — weekly systems sprint, Focus Bench timer, course readiness, and the active career lane at a glance
+- **Course prep** — CS 149 (Operating Systems) and CS 158A (Computer Networks) module explorer with runnable labs and mastery tracking
+- **Academic plan** — known-courses checklist, four-term timeline, skill constellation, and an electives decision table
+- **Campus resources** — SJSU portal (primary: MyProgress, catalog, prerequisites, career center, Handshake) with an SDSU portal toggle (secondary/transfer resources and events)
+- **Career paths** — six lanes with verdicts, roadmap phases, milestones, and flagship project briefs
+- **Career resources** — searchable, filterable resource stack with per-resource progress
+- **Applications** — recruiting signals, a local job tracker, weekly outreach cadence, and referral strategy
+- **Evidence shelf** — the research behind the course claims, labeled by evidence strength (official / syllabus / student / inferred)
+
+Progress switches lanes without losing state: tasks, resource progress, milestones, and applications are stored per path and can be exported as JSON from the sidebar.
 
 ## Run locally
 
@@ -34,18 +35,18 @@ npm run dev
 Open the URL Vite prints, usually `http://localhost:5173`.
 
 ```bash
-npm run lint
-npm run build
-npm run preview
+npm run lint     # oxlint
+npm run build    # tsc + vite build
+npm run preview  # serve the production build
 ```
 
 ## Project structure
 
+- `src/App.tsx` — all eight views, sidebar navigation, hash routing, and local persistence
+- `src/App.css` — the oklch design system and responsive layout
 - `src/data/careerPaths.ts` — six path profiles, curricula, resources, projects, and market signals
-- `src/App.tsx` — navigation, local persistence, trackers, filters, and workspace views
-- `src/App.css` — responsive visual system and component styling
-- `PRODUCT.md` — product intent and design principles
+- `src/data/sjsuData.ts` — SJSU course-prep modules, academic roadmap, electives, and evidence sources
+- `src/data/roadmap.ts` — SDSU campus resources and career events (secondary campus view)
+- `PRODUCT.md` / `PROJECT_BRIEF.md` — product intent and design principles
 
-All checked tasks, resource states, project milestones, and applications stay in the browser. The app has no account, backend, analytics, or cloud sync.
-
-Research was reviewed on July 11, 2026. Course access and recruiting links can change; source links are included so details can be verified before acting.
+Research was last reviewed in July 2026. Course access and recruiting links change; the Evidence shelf keeps sources labeled so details can be re-verified before acting.

@@ -1,16 +1,10 @@
 # Product
 
-## Register
-
-product
-
-## Product
-
-Signal Path is a private, browser-local career-path workspace for an SDSU computer science junior. It turns a noisy field of courses, videos, projects, interview advice, and job titles into evidence-based routes toward a Summer 2027 internship.
+Signal Path is a private, browser-local academic and career workspace for an SJSU computer science student. It turns a noisy field of courses, videos, projects, interview advice, and job titles into evidence-based routes toward a Summer 2027 internship.
 
 ## Primary User
 
-A rising third-year computer science student at San Diego State University who:
+A transitioning third-year computer science student at San Jose State University (SJSU) — with earlier SDSU resources retained as a clearly labeled secondary campus view — who:
 
 - is comparing data science, data engineering, software engineering, Java backend, cybersecurity, and machine-learning engineering;
 - has a relationship with a Meta data scientist and may be able to earn a referral;

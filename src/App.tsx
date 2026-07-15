@@ -348,6 +348,9 @@ function App() {
     focusLog.minutes +
     WEEKLY_TASKS.filter((task) => weeklyTasksCompleted[task.id]).reduce((sum, task) => sum + durationToMinutes(task.duration), 0) +
     allSjsuModules.filter((module) => modulesCompleted[module.id]).reduce((sum, module) => sum + durationToMinutes(module.duration), 0)
+  const totalPlannedMinutes =
+    WEEKLY_TASKS.reduce((sum, task) => sum + durationToMinutes(task.duration), 0) +
+    allSjsuModules.reduce((sum, module) => sum + durationToMinutes(module.duration), 0)
 
   // Combined Global Readiness Score (0 - 100)
   // Codex Formula: Math.min(100, Math.round(18 + (weeklyComplete / WEEKLY_TASKS.length) * 22 + (modulesComplete / moduleList.length) * 60))
@@ -723,7 +726,7 @@ function App() {
         <div className="sidebar-meters" aria-label="Live progress meters">
           <div className="sidebar-meter">
             <span>Study banked</span>
-            <strong>{(studyMinutes / 60).toFixed(1)}h</strong>
+            <strong>{(studyMinutes / 60).toFixed(1)}<em>/{Math.round(totalPlannedMinutes / 60)}h</em></strong>
           </div>
           <div className="sidebar-meter">
             <span>Fall classes</span>
@@ -841,7 +844,7 @@ function App() {
             <section className="signal-meters" aria-label="Progress meters and countdowns">
               <button type="button" className="signal-meter" onClick={() => document.querySelector('.focus-bench')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
                 <span className="mono-label">STUDY BANKED</span>
-                <strong>{(studyMinutes / 60).toFixed(1)}<small> h</small></strong>
+                <strong>{(studyMinutes / 60).toFixed(1)}<small> / {Math.round(totalPlannedMinutes / 60)} h planned</small></strong>
                 <span className="signal-meter-note">
                   {studyMinutes === 0
                     ? 'Finish a focus block, weekly task, or lab to start the log'

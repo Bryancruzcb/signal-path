@@ -1231,6 +1231,12 @@ p {
   color: var(--ink);
 }
 
+.sidebar-meter strong em {
+  font-style: normal;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
 .project-stage {
   border-bottom: 1px solid var(--line-strong);
   padding-bottom: 12px;

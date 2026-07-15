@@ -408,6 +408,91 @@ p {
   letter-spacing: 0.08em;
 }
 
+/* Evidence pills & status markers */
+.evidence-pill,
+.waitlist-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 3px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.evidence-pill.evidence-official {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-deep);
+}
+
+.evidence-pill.evidence-syllabus {
+  border-color: var(--network);
+  background: var(--network-soft);
+  color: var(--network-deep);
+}
+
+.evidence-pill.evidence-student {
+  border-color: var(--signal);
+  background: var(--signal-soft);
+  color: var(--signal-deep);
+}
+
+.evidence-pill.evidence-inferred {
+  border-color: var(--warning);
+  background: var(--surface-muted);
+  color: var(--ink-soft);
+}
+
+.waitlist-pill {
+  border-color: var(--danger);
+  background: var(--signal-soft);
+  color: var(--danger);
+}
+
+.live-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--signal);
+  animation: live-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-dot-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--signal);
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
+
+/* Recruiting banner: keep the live dot on the same line as its label */
+.recruiting-banner > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 /* Dashboard Intro & Hero */
 .dashboard-intro {
   display: grid;
@@ -786,7 +871,7 @@ p {
 
 .course-fact-strip {
   display: grid;
-  grid-template-columns: 1.5fr repeat(3, 1fr);
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -1809,5 +1894,64 @@ p {
 
   .dialog-shell-narrow {
     width: min(92vw, 520px);
+  }
+
+  /* Hero: side-by-side stamp squeezes the headline at phone widths —
+     stack to one column with the stamp below the actions */
+  .dashboard-intro {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .readiness-stamp {
+    justify-self: start;
+  }
+
+  /* Fact strip: four-across never fits a phone; 2×2 here, single column below 520px */
+  .course-fact-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .course-fact {
+    border-left: none;
+  }
+
+  .course-fact:nth-child(even) {
+    border-left: 1px solid var(--line);
+  }
+
+  .course-fact:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+
+  /* Module rows: index + title on the first line, proof-of-work under it,
+     then the action buttons full width */
+  .module-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px 16px;
+  }
+
+  .module-deliverable,
+  .module-action {
+    grid-column: 1 / -1;
+  }
+
+  .module-action .button {
+    flex-grow: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .course-fact-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .course-fact,
+  .course-fact:nth-child(even) {
+    border-left: none;
+  }
+
+  .course-fact:nth-child(n + 2) {
+    border-top: 1px solid var(--line);
   }
 }

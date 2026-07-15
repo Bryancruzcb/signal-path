@@ -278,6 +278,8 @@ function App() {
     return Math.min(25 * 60, Math.max(1, Math.round(stored)))
   })
   const [timerRunning, setTimerRunning] = useState(false)
+  // Wall-clock deadline for the running timer; null whenever it is paused or idle.
+  const timerEndAtRef = useRef<number | null>(null)
 
   // Modal / UI states
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)
@@ -366,8 +368,11 @@ function App() {
     focusLog.minutes +
     WEEKLY_TASKS.filter((task) => weeklyTasksCompleted[task.id]).reduce((sum, task) => sum + durationToMinutes(task.duration), 0) +
     allSjsuModules.filter((module) => modulesCompleted[module.id]).reduce((sum, module) => sum + durationToMinutes(module.duration), 0)
+  const weeklyPlannedMinutes = WEEKLY_TASKS.reduce((sum, task) => sum + durationToMinutes(task.duration), 0)
+  // Weekly sprint header: derived from task durations so it never goes stale (e.g. 250 → "4H 10M")
+  const weeklyPlannedLabel = `${Math.floor(weeklyPlannedMinutes / 60)}H ${String(weeklyPlannedMinutes % 60).padStart(2, '0')}M`
   const totalPlannedMinutes =
-    WEEKLY_TASKS.reduce((sum, task) => sum + durationToMinutes(task.duration), 0) +
+    weeklyPlannedMinutes +
     allSjsuModules.reduce((sum, module) => sum + durationToMinutes(module.duration), 0)
 
   // Combined Global Readiness Score (0 - 100)
@@ -425,24 +430,57 @@ function App() {
   useEffect(() => localStorage.setItem(storage.knownCourses, JSON.stringify(knownCourses)), [knownCourses])
   useEffect(() => localStorage.setItem(storage.activeCourse, activeCourse), [activeCourse])
   useEffect(() => localStorage.setItem(storage.focusLog, JSON.stringify(focusLog)), [focusLog])
-  useEffect(() => localStorage.setItem(storage.timer, String(timerRemaining)), [timerRemaining])
 
-  // Focus Timer effect
+  // Focus Timer effect: the countdown is derived from a wall-clock deadline so background-tab
+  // throttling never stalls it, and a throttled tab snaps back to the true value on return.
+  // Remaining seconds are persisted on pause/completion/unload rather than on every tick.
   useEffect(() => {
     if (!timerRunning) return
-    const interval = setInterval(() => {
-      setTimerRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          setTimerRunning(false)
-          setFocusLog((log) => ({ minutes: log.minutes + 25, sessions: log.sessions + 1 }))
-          setToast("Focus block complete. Write down what surprised you before opening another tab.")
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
+
+    const sync = () => {
+      const endAt = timerEndAtRef.current
+      if (endAt === null) return
+      const remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000))
+      if (remaining > 0) {
+        setTimerRemaining(remaining)
+        return
+      }
+      completeFocusBlock()
+    }
+    const persist = () => {
+      const endAt = timerEndAtRef.current
+      if (endAt === null) return
+      const remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000))
+      if (remaining > 0) {
+        localStorage.setItem(storage.timer, String(remaining))
+        return
+      }
+      // The deadline expired before the completion tick fired: bank the finished
+      // block straight to storage (React state cannot flush during unload), then
+      // complete the in-memory state in case the page survives beforeunload. The
+      // storage write stays consistent because the focusLog effect above persists
+      // the same +25/+1 values, and the nulled deadline keeps this from re-firing
+      // on the pagehide that follows beforeunload.
+      const logged = readObject(storage.focusLog, { minutes: 0, sessions: 0 })
+      localStorage.setItem(
+        storage.focusLog,
+        JSON.stringify({ minutes: logged.minutes + 25, sessions: logged.sessions + 1 })
+      )
+      completeFocusBlock()
+    }
+
+    const interval = setInterval(sync, 1000)
+    window.addEventListener('focus', sync)
+    document.addEventListener('visibilitychange', sync)
+    window.addEventListener('beforeunload', persist)
+    window.addEventListener('pagehide', persist)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', sync)
+      document.removeEventListener('visibilitychange', sync)
+      window.removeEventListener('beforeunload', persist)
+      window.removeEventListener('pagehide', persist)
+    }
   }, [timerRunning])
 
   useEffect(() => {
@@ -506,30 +544,23 @@ function App() {
   }
 
   function toggleWeeklyTask(id: string) {
-    setWeeklyTasksCompleted((current) => {
-      const updated = { ...current, [id]: !current[id] }
-      if (updated[id]) {
-        setToast("Weekly step recorded. Keep the artifact—you may reuse it in class.")
-      }
-      return updated
-    })
+    const nowComplete = !weeklyTasksCompleted[id]
+    setWeeklyTasksCompleted((current) => ({ ...current, [id]: !current[id] }))
+    if (nowComplete) {
+      setToast("Weekly step recorded. Keep the artifact—you may reuse it in class.")
+    }
   }
 
   function toggleModuleMastery(id: string) {
-    setModulesCompleted((current) => {
-      const updated = { ...current, [id]: !current[id] }
-      const moduleTitle = allSjsuModules.find((m) => m.id === id)?.title ?? ''
-      setToast(updated[id] ? `Mastery recorded: ${moduleTitle}` : `${moduleTitle} moved back to learning.`)
-      return updated
-    })
+    const nowComplete = !modulesCompleted[id]
+    const moduleTitle = allSjsuModules.find((m) => m.id === id)?.title ?? ''
+    setModulesCompleted((current) => ({ ...current, [id]: !current[id] }))
+    setToast(nowComplete ? `Mastery recorded: ${moduleTitle}` : `${moduleTitle} moved back to learning.`)
   }
 
   function toggleKnownCourse(id: string) {
-    setKnownCourses((current) => {
-      const updated = { ...current, [id]: !current[id] }
-      setToast("Starting point updated. Verify the final plan against MyProgress.")
-      return updated
-    })
+    setKnownCourses((current) => ({ ...current, [id]: !current[id] }))
+    setToast("Starting point updated. Verify the final plan against MyProgress.")
   }
 
   function toggleMilestone(id: string) {
@@ -719,8 +750,11 @@ function App() {
     setKnownCourses(Object.fromEntries(KNOWN_COURSES.map((c) => [c.id, c.default])))
     setApplications([])
     setResetArmed(false)
+    setFocusLog({ minutes: 0, sessions: 0 })
+    timerEndAtRef.current = null
     setTimerRemaining(25 * 60)
     setTimerRunning(false)
+    localStorage.setItem(storage.timer, String(25 * 60))
     setToast('All progress reset on this device.')
   }
 
@@ -730,13 +764,47 @@ function App() {
   }
 
   // Timer helpers
+  // Shared completion path: the sync tick, the pause button, and unload persistence
+  // can each observe the deadline expiring first. It runs outside any state updater
+  // (impure updaters double-fire under StrictMode); nulling the deadline before the
+  // state updates guarantees the session logs exactly once.
+  function completeFocusBlock() {
+    timerEndAtRef.current = null
+    setTimerRunning(false)
+    setTimerRemaining(25 * 60)
+    setFocusLog((log) => ({ minutes: log.minutes + 25, sessions: log.sessions + 1 }))
+    setToast("Focus block complete. Write down what surprised you before opening another tab.")
+    localStorage.setItem(storage.timer, String(25 * 60))
+  }
+
   function toggleTimer() {
-    setTimerRunning(!timerRunning)
+    if (timerRunning) {
+      // Pause: freeze the remaining seconds derived from the deadline, then drop it.
+      const endAt = timerEndAtRef.current
+      if (endAt !== null) {
+        const remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000))
+        if (remaining === 0) {
+          // The deadline expired before the completion tick fired: finish the
+          // block instead of stranding an unlogged session paused at 0.
+          completeFocusBlock()
+          return
+        }
+        timerEndAtRef.current = null
+        setTimerRemaining(remaining)
+        localStorage.setItem(storage.timer, String(remaining))
+      }
+      setTimerRunning(false)
+    } else {
+      timerEndAtRef.current = Date.now() + timerRemaining * 1000
+      setTimerRunning(true)
+    }
   }
 
   function resetTimer() {
+    timerEndAtRef.current = null
     setTimerRunning(false)
     setTimerRemaining(25 * 60)
+    localStorage.setItem(storage.timer, String(25 * 60))
   }
 
   const formatTimer = (seconds: number) => {
@@ -1023,7 +1091,7 @@ function App() {
               <section className="weekly-plan panel" aria-labelledby="weekly-plan-heading">
                 <div className="section-heading-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '16px' }}>
                   <div>
-                    <p className="mono-label">THIS WEEK · 4H 30M</p>
+                    <p className="mono-label">THIS WEEK · {weeklyPlannedLabel}</p>
                     <h3 id="weekly-plan-heading" style={{ fontSize: '1.4rem', margin: '0' }}>A small systems sprint</h3>
                   </div>
                   <span className="plan-count" id="weeklyCount" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--muted)' }}>
@@ -1069,7 +1137,7 @@ function App() {
                   </span>
                 </div>
                 <h3 id="focus-heading" style={{ fontSize: '1.25rem', marginBottom: '8px' }}>One honest block.</h3>
-                <div className="timer" id="timerDisplay" aria-live="polite" style={{ fontSize: '4.8rem', fontFamily: 'var(--font-mono)', fontWeight: '500', textAlign: 'center', margin: '24px 0', letterSpacing: '-0.02em', color: timerRunning ? 'var(--primary-deep)' : 'var(--ink)' }}>
+                <div className="timer" id="timerDisplay" style={{ fontSize: '4.8rem', fontFamily: 'var(--font-mono)', fontWeight: '500', textAlign: 'center', margin: '24px 0', letterSpacing: '-0.02em', color: timerRunning ? 'var(--primary-deep)' : 'var(--ink)' }}>
                   {formatTimer(timerRemaining)}
                 </div>
                 <p id="timerPrompt" style={{ fontSize: '0.85rem', color: 'var(--muted)', textAlign: 'center', marginBottom: '24px' }}>
@@ -1160,12 +1228,12 @@ function App() {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                 <div>
-                  <span className="evidence-pill evidence-syllabus" style={{ marginBottom: '8px', display: 'inline-block' }}>LANE VERDICT</span>
+                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>LANE VERDICT</span>
                   <p style={{ fontWeight: '600', fontSize: '1.05rem', color: 'var(--ink)' }}>{profile.verdict}</p>
                   <p style={{ color: 'var(--ink-soft)', fontSize: '0.94rem', margin: '8px 0 0' }}>{profile.summary}</p>
                 </div>
                 <div>
-                  <span className="evidence-pill evidence-official" style={{ marginBottom: '8px', display: 'inline-block' }}>ROLE FIT</span>
+                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>ROLE FIT</span>
                   <p style={{ fontSize: '0.92rem', color: 'var(--ink-soft)', lineHeight: '1.5' }}>{profile.fit}</p>
                   <div style={{ marginTop: '16px' }}>
                     <span className="mono-label">WEEKLY TARGET</span>
@@ -1173,7 +1241,7 @@ function App() {
                   </div>
                 </div>
                 <div>
-                  <span className="evidence-pill evidence-inferred" style={{ marginBottom: '8px', display: 'inline-block' }}>TARGET EVIDENCE</span>
+                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>TARGET EVIDENCE</span>
                   <p style={{ fontSize: '0.94rem', fontWeight: '500', color: 'var(--ink)' }}>{profile.primaryOutput}</p>
                   <div style={{ marginTop: '16px' }}>
                     <span className="mono-label">CAREER MILESTONES</span>
@@ -1912,8 +1980,8 @@ function App() {
                 return (
                   <article className={`resource-card ${res.kind.toLowerCase().replaceAll(' ', '-')}`} key={res.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', padding: '24px', background: 'var(--surface)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="evidence-pill evidence-syllabus" style={{ fontSize: '0.7rem' }}>{res.kind}</span>
-                      <span className={`evidence-pill ${res.evidence === 'Official' ? 'evidence-official' : 'evidence-student'}`} style={{ fontSize: '0.7rem' }}>{res.evidence}</span>
+                      <span className="evidence-pill">{res.kind}</span>
+                      <span className={`evidence-pill ${res.evidence === 'Official' ? 'evidence-official' : 'evidence-student'}`}>{res.evidence}</span>
                     </div>
                     <div>
                       <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{res.provider}</span>
@@ -1983,7 +2051,7 @@ function App() {
             />
 
             <section className="recruiting-banner" style={{ margin: '24px 0', padding: '20px', borderLeft: '4px solid var(--path-accent)', background: 'var(--surface)', borderRadius: 'var(--radius-sm)' }}>
-              <div><span className="live-dot" /><p className="eyebrow" style={{ margin: '0 0 4px', fontSize: '0.64rem' }}>TIMING ALERT</p></div>
+              <div><span className="live-dot" /><p className="eyebrow" style={{ margin: '0', fontSize: '0.64rem' }}>TIMING ALERT</p></div>
               <h2 style={{ fontSize: '1.25rem', margin: '0', fontWeight: '600' }}>Summer 2027 recruitment is active now</h2>
               <p style={{ margin: '6px 0 0', color: 'var(--ink-soft)', fontSize: '0.92rem' }}>
                 Postings refresh weekly. Put opportunities in the tracker immediately to prevent missed deadlines.

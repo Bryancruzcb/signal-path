@@ -1,7 +1,9 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
+  type ChangeEvent,
   type CSSProperties,
   type FormEvent,
 } from 'react'
@@ -31,6 +33,7 @@ import {
   ShieldCheck,
   Target,
   Trash2,
+  Upload,
   X,
   Zap,
   Compass,
@@ -97,6 +100,7 @@ const storage = {
   knownCourses: 'third-year-lab-known-v1',
   activeCourse: 'third-year-lab-active-course-v1',
   focusLog: 'third-year-lab-focus-log-v1',
+  timer: 'third-year-lab-timer-v1',
 }
 
 const FALL_2026_FIRST_DAY = '2026-08-19' // SJSU registrar: first day of Fall 2026 instruction
@@ -107,6 +111,11 @@ function daysUntil(dateString: string) {
   const now = new Date()
   now.setHours(0, 0, 0, 0)
   return Math.max(0, Math.round((target.getTime() - now.getTime()) / 86_400_000))
+}
+
+// Once a countdown hits zero, show "Now"/"now" instead of a stale "0 days"
+function countdownReached(dateString: string) {
+  return daysUntil(dateString) === 0
 }
 
 // "45m" → 45 · "2 hours" → 120 · "2–3 hours" → 120 (lower bound, honest accounting)
@@ -260,8 +269,14 @@ function App() {
     readObject<{ minutes: number; sessions: number }>(storage.focusLog, { minutes: 0, sessions: 0 })
   )
 
-  // Timer state
-  const [timerRemaining, setTimerRemaining] = useState(25 * 60)
+  // Timer state (remaining seconds survive a refresh; the running flag never does)
+  const [timerRemaining, setTimerRemaining] = useState(() => {
+    const stored = Number(localStorage.getItem(storage.timer) ?? Number.NaN)
+    // A stored 0 means the last focus block completed; start fresh instead of
+    // reviving the terminal state (which would log a phantom session on resume).
+    if (!Number.isFinite(stored) || stored <= 0) return 25 * 60
+    return Math.min(25 * 60, Math.max(1, Math.round(stored)))
+  })
   const [timerRunning, setTimerRunning] = useState(false)
 
   // Modal / UI states
@@ -284,6 +299,9 @@ function App() {
   // Toast / Reset
   const [toast, setToast] = useState('')
   const [resetArmed, setResetArmed] = useState(false)
+
+  // Import backup
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   // --- Derived Values ---
   const profile = pathProfiles.find((item) => item.id === selectedPath) ?? pathProfiles[0]
@@ -407,6 +425,7 @@ function App() {
   useEffect(() => localStorage.setItem(storage.knownCourses, JSON.stringify(knownCourses)), [knownCourses])
   useEffect(() => localStorage.setItem(storage.activeCourse, activeCourse), [activeCourse])
   useEffect(() => localStorage.setItem(storage.focusLog, JSON.stringify(focusLog)), [focusLog])
+  useEffect(() => localStorage.setItem(storage.timer, String(timerRemaining)), [timerRemaining])
 
   // Focus Timer effect
   useEffect(() => {
@@ -563,6 +582,7 @@ function App() {
       weeklyTasksCompleted,
       modulesCompleted,
       knownCourses,
+      focusLog,
     }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -572,6 +592,117 @@ function App() {
     anchor.click()
     URL.revokeObjectURL(url)
     setToast('Progress exported.')
+  }
+
+  async function importProgress(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.target
+    const file = input.files?.[0]
+    input.value = '' // allow re-importing the same file
+    if (!file) return
+
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(await file.text())
+    } catch {
+      setToast('Import failed: file is not valid JSON.')
+      return
+    }
+
+    const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+      typeof value === 'object' && value !== null && !Array.isArray(value)
+
+    const knownKeys = [
+      'selectedPath',
+      'completedTasks',
+      'resourceStates',
+      'completedMilestones',
+      'applications',
+      'weeklyTasksCompleted',
+      'modulesCompleted',
+      'knownCourses',
+      'focusLog',
+    ]
+    if (!isPlainObject(parsed) || !knownKeys.some((key) => key in parsed)) {
+      setToast('Import failed: not a Signal Path backup file.')
+      return
+    }
+
+    const toStringArray = (value: unknown[]) =>
+      value.filter((item): item is string => typeof item === 'string')
+    const toBooleanRecord = (value: Record<string, unknown>) =>
+      Object.fromEntries(
+        Object.entries(value).filter(([, item]) => typeof item === 'boolean')
+      ) as Record<string, boolean>
+    const resourceStatusValues: ResourceStatus[] = ['planned', 'in-progress', 'complete']
+    const isApplication = (value: unknown): value is Application =>
+      isPlainObject(value) &&
+      typeof value.id === 'string' &&
+      typeof value.pathId === 'string' &&
+      isPathId(value.pathId) &&
+      typeof value.company === 'string' &&
+      typeof value.role === 'string' &&
+      typeof value.url === 'string' &&
+      typeof value.date === 'string' &&
+      typeof value.status === 'string' &&
+      statusOptions.includes(value.status as ApplicationStatus) &&
+      typeof value.nextStep === 'string'
+
+    const restored: string[] = []
+    if (typeof parsed.selectedPath === 'string' && isPathId(parsed.selectedPath)) {
+      setSelectedPath(parsed.selectedPath)
+      restored.push('path')
+    }
+    if (Array.isArray(parsed.completedTasks)) {
+      setCompletedTasks(toStringArray(parsed.completedTasks))
+      restored.push('tasks')
+    }
+    if (isPlainObject(parsed.resourceStates)) {
+      setResourceStates(
+        Object.fromEntries(
+          Object.entries(parsed.resourceStates).filter(([, value]) =>
+            resourceStatusValues.includes(value as ResourceStatus)
+          )
+        ) as Record<string, ResourceStatus>
+      )
+      restored.push('resources')
+    }
+    if (Array.isArray(parsed.completedMilestones)) {
+      setCompletedMilestones(toStringArray(parsed.completedMilestones))
+      restored.push('milestones')
+    }
+    if (Array.isArray(parsed.applications)) {
+      setApplications(parsed.applications.filter(isApplication))
+      restored.push('applications')
+    }
+    if (isPlainObject(parsed.weeklyTasksCompleted)) {
+      setWeeklyTasksCompleted(toBooleanRecord(parsed.weeklyTasksCompleted))
+      restored.push('weekly tasks')
+    }
+    if (isPlainObject(parsed.modulesCompleted)) {
+      setModulesCompleted(toBooleanRecord(parsed.modulesCompleted))
+      restored.push('modules')
+    }
+    if (isPlainObject(parsed.knownCourses)) {
+      setKnownCourses(toBooleanRecord(parsed.knownCourses))
+      restored.push('courses')
+    }
+    if (
+      isPlainObject(parsed.focusLog) &&
+      typeof parsed.focusLog.minutes === 'number' &&
+      typeof parsed.focusLog.sessions === 'number'
+    ) {
+      setFocusLog({
+        minutes: Math.max(0, parsed.focusLog.minutes),
+        sessions: Math.max(0, parsed.focusLog.sessions),
+      })
+      restored.push('focus log')
+    }
+
+    if (restored.length === 0) {
+      setToast('Import failed: backup contained no restorable data.')
+      return
+    }
+    setToast(`Backup restored: ${restored.join(', ')}.`)
   }
 
   function resetAllProgress() {
@@ -730,11 +861,11 @@ function App() {
           </div>
           <div className="sidebar-meter">
             <span>Fall classes</span>
-            <strong>{daysUntil(FALL_2026_FIRST_DAY)}d</strong>
+            <strong>{countdownReached(FALL_2026_FIRST_DAY) ? 'now' : `${daysUntil(FALL_2026_FIRST_DAY)}d`}</strong>
           </div>
           <div className="sidebar-meter">
             <span>Apps open · est.</span>
-            <strong>{daysUntil(INTERNSHIP_APPS_OPEN)}d</strong>
+            <strong>{countdownReached(INTERNSHIP_APPS_OPEN) ? 'now' : `${daysUntil(INTERNSHIP_APPS_OPEN)}d`}</strong>
           </div>
         </div>
 
@@ -761,6 +892,18 @@ function App() {
           <button type="button" className="text-button" onClick={exportProgress} style={{ padding: '0', display: 'flex', gap: '5px', marginTop: '6px', fontSize: '0.74rem' }}>
             <Download size={13} /> Export Backup
           </button>
+          <button type="button" className="text-button" onClick={() => importInputRef.current?.click()} style={{ padding: '0', display: 'flex', gap: '5px', marginTop: '4px', fontSize: '0.74rem' }}>
+            <Upload size={13} /> Import Backup
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json"
+            onChange={importProgress}
+            style={{ display: 'none' }}
+            aria-hidden="true"
+            tabIndex={-1}
+          />
           <button
             className={`text-button ${resetArmed ? 'danger armed' : ''}`}
             id="resetProgress"
@@ -853,13 +996,25 @@ function App() {
               </button>
               <button type="button" className="signal-meter" onClick={() => navigate('academic-plan')}>
                 <span className="mono-label">FALL 2026 CLASSES</span>
-                <strong>{daysUntil(FALL_2026_FIRST_DAY)}<small> days</small></strong>
-                <span className="signal-meter-note">Instruction starts Aug 19 · CS 149, CS 158A, GE R/S/V</span>
+                {countdownReached(FALL_2026_FIRST_DAY)
+                  ? <strong>Now</strong>
+                  : <strong>{daysUntil(FALL_2026_FIRST_DAY)}<small> days</small></strong>}
+                <span className="signal-meter-note">
+                  {countdownReached(FALL_2026_FIRST_DAY)
+                    ? 'Semester in session'
+                    : 'Instruction starts Aug 19 · CS 149, CS 158A, GE R/S/V'}
+                </span>
               </button>
               <button type="button" className="signal-meter" onClick={() => navigate('outreach-applications')}>
                 <span className="mono-label">SUMMER 2027 APPS</span>
-                <strong>{daysUntil(INTERNSHIP_APPS_OPEN)}<small> days</small></strong>
-                <span className="signal-meter-note">Est. early Aug — big-tech postings open first; verify per company</span>
+                {countdownReached(INTERNSHIP_APPS_OPEN)
+                  ? <strong>Now</strong>
+                  : <strong>{daysUntil(INTERNSHIP_APPS_OPEN)}<small> days</small></strong>}
+                <span className="signal-meter-note">
+                  {countdownReached(INTERNSHIP_APPS_OPEN)
+                    ? 'Applications open — go apply'
+                    : 'Est. early Aug — big-tech postings open first; verify per company'}
+                </span>
               </button>
             </section>
 
@@ -947,7 +1102,7 @@ function App() {
                 </button>
               </div>
 
-              <div className="course-split" id="courseReadiness" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '18px' }}>
+              <div className="course-split" id="courseReadiness">
                 {Object.entries(COURSES).map(([key, course]) => {
                   const completed = course.modules.filter((m) => modulesCompleted[m.id]).length
                   const readiness = Math.round(20 + (completed / course.modules.length) * 80)
@@ -1170,7 +1325,7 @@ function App() {
         {/* --- VIEW: Academic Plan --- */}
         {activeView === 'academic-plan' && (
           <section className="view is-active" id="view-roadmap">
-            <header className="page-intro roadmap-intro" style={{ display: 'grid', gridTemplateColumns: '1fr minmax(260px, auto)', gap: '28px', borderBottom: '1px solid var(--line)', paddingBottom: '32px', marginBottom: '36px' }}>
+            <header className="page-intro roadmap-intro page-intro-split">
               <div>
                 <p className="mono-label">A CAUTIOUS FOUR-TERM PLAN</p>
                 <h2 id="roadmap-heading" style={{ fontSize: '2.5rem', margin: '0' }}>Protect the prerequisites. Aim the electives.</h2>
@@ -1384,7 +1539,7 @@ function App() {
         {/* --- VIEW: Campus Resources --- */}
         {activeView === 'campus-resources' && (
           <section className="view is-active" id="view-campus">
-            <header className="page-intro" style={{ display: 'grid', gridTemplateColumns: '1fr minmax(260px, auto)', gap: '28px', borderBottom: '1px solid var(--line)', paddingBottom: '32px', marginBottom: '36px' }}>
+            <header className="page-intro page-intro-split">
               <div>
                 <p className="mono-label">UNIVERSITY RESOURCES & PORTALS</p>
                 <h2 style={{ fontSize: '2.5rem', margin: '0' }}>Campus Signals & Requirements</h2>
@@ -1751,7 +1906,7 @@ function App() {
               </label>
             </section>
 
-            <div className="resource-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '18px' }}>
+            <div className="resource-grid">
               {filteredResources.map((res) => {
                 const status = resourceStates[res.id] ?? 'planned'
                 return (
@@ -1798,6 +1953,23 @@ function App() {
                 )
               })}
             </div>
+
+            {filteredResources.length === 0 && (
+              <div className="resource-empty" role="status">
+                <p>No resources match these filters.</p>
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  onClick={() => {
+                    setResourceQuery('')
+                    setResourceCategory('All')
+                    setResourceKind('All')
+                  }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
           </section>
         )}
 
@@ -2055,7 +2227,7 @@ function App() {
       {/* 1. Module Dialog Details */}
       {activeModule && activeModuleCourse && (
         <div className="dialog-overlay" style={{ position: 'fixed', inset: '0', zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'grid', placeItems: 'center', padding: '20px' }} onClick={() => setOpenModuleId(null)}>
-          <div className="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="module-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', maxWidth: '640px', width: '100%', padding: '28px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+          <div className="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="module-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: '28px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
             <header className="dialog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
               <div>
                 <span className="mono-label" style={{ color: 'var(--path-accent)' }}>{activeModuleCourse.code} · {activeModuleCourse.title}</span>
@@ -2114,7 +2286,7 @@ function App() {
       {/* 2. Evidence Legend Dialog */}
       {evidenceLegendOpen && (
         <div className="dialog-overlay" style={{ position: 'fixed', inset: '0', zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'grid', placeItems: 'center', padding: '20px' }} onClick={() => setEvidenceLegendOpen(false)}>
-          <div className="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="legend-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', maxWidth: '520px', width: '100%', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+          <div className="dialog-shell dialog-shell-narrow" role="dialog" aria-modal="true" aria-labelledby="legend-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
             <header className="dialog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
               <div>
                 <span className="mono-label">READING THE RESEARCH</span>

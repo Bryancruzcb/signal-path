@@ -1689,6 +1689,29 @@ p {
     border-bottom: 1px solid var(--line);
     padding: 20px;
   }
+  /* Collapse the sidebar into a static top bar: nav wraps in a row,
+     live meters stay visible as a compact row */
+  .brand-lockup {
+    padding-bottom: 16px;
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .nav-item {
+    width: auto;
+  }
+  .sidebar-meters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    margin-top: 14px;
+    padding: 12px 8px;
+  }
+  .sidebar-meter {
+    gap: 8px;
+  }
   .app-main {
     width: 100%;
     margin-left: 0;
@@ -1699,5 +1722,92 @@ p {
   }
   .application-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile pass: 1:1 extractions of former inline layout styles
+   (inline style grids defeat media queries — see past bug) */
+.page-intro-split {
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, auto);
+  gap: 28px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 32px;
+  margin-bottom: 36px;
+}
+
+.course-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 18px;
+}
+
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 18px;
+}
+
+/* Shown when the resource filters match nothing */
+.resource-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  text-align: center;
+}
+
+.resource-empty p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+/* Legend dialog: former inline maxWidth 520px / width 100% */
+.dialog-shell-narrow {
+  width: min(92vw, 520px);
+}
+
+/* Small screens (target: usable at 390px, no horizontal page scroll) */
+@media (max-width: 768px) {
+  /* Rows built with inline display:flex — flex-wrap/gap are not set
+     inline, so these media rules apply without fighting inline styles */
+  .page-intro,
+  .section-heading-row,
+  .module-list-heading,
+  .plan-footer,
+  .project-meta-row,
+  .course-selector,
+  .source-filters {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .page-intro-split {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .term-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* minmax(360px, …) floors overflow a 390px viewport */
+  .course-split,
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-shell {
+    width: min(92vw, 640px);
+  }
+
+  .dialog-shell-narrow {
+    width: min(92vw, 520px);
   }
 }

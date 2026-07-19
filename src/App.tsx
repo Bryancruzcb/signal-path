@@ -136,7 +136,7 @@ const statusOptions: ApplicationStatus[] = [
   'Closed',
 ]
 
-const referralDraft = `Hey [Name] — I’ve narrowed my target to product data science and have been preparing around SQL, experimentation, and product metrics. I built [project] to answer [decision], and I can walk through the trade-offs and recommendation. Would you be open to a 20-minute conversation about how the role works at Meta and where my gaps still are? No pressure on a referral—I’d value your candid feedback first.`
+const referralDraft = `Hey [Name] — I’ve narrowed my target to [role family] and have been preparing around [skills]. I built [project] to answer [decision], and I can walk through the trade-offs and recommendation. Would you be open to a 20-minute conversation about how the role works at [company] and where my gaps still are? No pressure on a referral—I’d value your candid feedback first.`
 
 function readArray(key: string) {
   try {

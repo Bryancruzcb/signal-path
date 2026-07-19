@@ -6,18 +6,18 @@ Build an evidence-based, interactive workspace that helps a rising SJSU computer
 
 ## Honest Career Thesis
 
-The user's Meta connection is useful, but the strongest strategy is not “learn generic data science, then ask for a referral.” It is:
+The strongest strategy is not “learn a generic skill set, then ask someone for a way in.” It is:
 
 1. target a role family that fits an undergraduate CS profile;
-2. build visible proof in SQL, experimentation, Python, and data systems;
+2. build visible proof in the languages and systems that role actually uses;
 3. apply broadly while still learning;
-4. use the Meta contact for calibration first and a referral only for a well-matched opening.
+4. treat any professional contact as calibration first, and a referral only for a well-matched opening.
 
-The default lane remains product analytics, but every path is a first-class workspace with its own curriculum, projects, resources, interview focus, and application titles.
+Every path is a first-class workspace with its own curriculum, projects, resources, interview focus, and application titles.
 
 ## Must Have
 
-- Candid role-fit recommendation and referral guidance
+- Candid role-fit recommendation
 - Dated curriculum phases with checkable tasks
 - Curated resource library with direct links, price, format, duration, and rationale
 - Persistent top-level path tabs for Data Science, Data Engineering, Software Engineering, Java Backend, Cybersecurity, and ML Engineering
@@ -48,6 +48,6 @@ The experience is successful when the user can answer all of these in under two 
 - Which niche should I test first, and why?
 - What exactly should I do this week?
 - Which course should I take instead of collecting five alternatives?
-- What portfolio evidence do I need before asking for the referral?
+- What portfolio evidence do I need before I start reaching out?
 - Which internship titles should I search for now?
 - How much progress have I made, and what is next?

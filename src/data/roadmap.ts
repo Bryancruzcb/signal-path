@@ -101,7 +101,7 @@ export const tracks: Array<{
     name: 'Product analytics + experimentation',
     shortName: 'Product analytics',
     verdict: 'Recommended first lane',
-    fit: 'The cleanest bridge between your CS background, a Meta data-science connection, and internships that accept undergraduates.',
+    fit: 'The cleanest bridge between a CS background and internships that accept undergraduates.',
     work: 'Define metrics, query behavior data, diagnose product changes, design experiments, and turn uncertainty into a recommendation.',
     core: ['Advanced SQL', 'Applied statistics', 'A/B testing', 'Product metrics', 'Python / pandas', 'Clear writing'],
     search: ['Product Analytics Intern', 'Data Science Intern', 'Product Analyst Intern', 'Decision Science Intern', 'Growth Analytics Intern'],
@@ -669,12 +669,12 @@ export const roadmap: RoadmapPhase[] = [
     index: '00',
     title: 'Launch before you feel ready',
     window: 'Jul 10–19 · 1 week',
-    purpose: 'Choose a testable lane, catch the first campus deadlines, and turn the Meta relationship into informed guidance—not a premature ask.',
+    purpose: 'Choose a testable lane, catch the first campus deadlines, and turn any industry contact into informed guidance—not a premature ask.',
     milestone: 'A role thesis, baseline scores, and recruiting accounts that are already active.',
     tasks: [
       {
         id: 'launch-role',
-        title: 'Read the Meta role guides and choose a 90-day lane',
+        title: 'Read the published role guides and choose a 90-day lane',
         detail: 'Default to Product Analytics + Data Engineering unless the day-to-day work clearly does not interest you.',
         effort: '45 min',
         output: 'Six-sentence role thesis in your notes',
@@ -705,8 +705,8 @@ export const roadmap: RoadmapPhase[] = [
         resourceIds: ['sjsu-handshake'],
       },
       {
-        id: 'launch-meta-chat',
-        title: 'Ask the Meta contact for calibration',
+        id: 'launch-contact-chat',
+        title: 'Ask an industry contact for calibration',
         detail: 'Ask what track they work in, what interns are evaluated on, and the two biggest gaps they see. Do not lead with the referral.',
         effort: '20 min ask',
         output: 'Conversation requested with resume attached',
@@ -1006,7 +1006,7 @@ export const roadmap: RoadmapPhase[] = [
       },
       {
         id: 'recruit-interview',
-        title: 'Practice the Meta-style skill mix weekly',
+        title: 'Practice the product-DS skill mix weekly',
         detail: '5–8 SQL problems, two stats questions, two metric cases, one experiment design, one project explanation, and one behavioral story.',
         effort: '4 hr / week',
         output: 'Interview error log',
@@ -1169,8 +1169,8 @@ export const evidenceNotes: Array<{
 }> = [
   {
     title: 'A referral is leverage, not a guarantee.',
-    statement: 'Meta does not publish a referral success rate or promise interviews. Current community reports also conflict on whether particular intern or university-grad roles accept referrals, so verify before applying.',
-    source: 'Meta candidate reports, synthesized July 2026',
+    statement: 'Large employers generally do not publish referral success rates or promise interviews. Community reports also conflict on whether particular intern or university-grad roles accept referrals at all, so verify before applying.',
+    source: 'Candidate reports, synthesized July 2026',
     url: 'https://www.reddit.com/r/leetcode/comments/1qdsdet/does_an_open_referral_at_meta_actually_carry_value/',
     level: 'Anecdotal',
   },
@@ -1197,7 +1197,7 @@ export const evidenceNotes: Array<{
   },
 ]
 
-export const referralMessage = `I’m a rising SJSU CS junior targeting Summer 2027 data internships. Could I ask for 20 minutes to understand which data-science track you work in and what interns are actually evaluated on? I can send a one-page resume and one project. I’d especially value blunt feedback on my top two gaps. When a matching role opens, could you also tell me whether that role accepts employee referrals?`
+export const referralMessage = `I’m a rising CS junior targeting Summer 2027 internships. Could I ask for 20 minutes to understand which track you work in and what interns are actually evaluated on? I can send a one-page resume and one project. I’d especially value blunt feedback on my top two gaps. When a matching role opens, could you also tell me whether that role accepts employee referrals?`
 
 export const applicationRoleFamilies: Record<TrackId, string[]> = {
   product: [

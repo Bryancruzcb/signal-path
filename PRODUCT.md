@@ -7,13 +7,12 @@ Signal Path is a private, browser-local academic and career workspace for an SJS
 A transitioning third-year computer science student at San Jose State University (SJSU) — with earlier SDSU resources retained as a clearly labeled secondary campus view — who:
 
 - is comparing data science, data engineering, software engineering, Java backend, cybersecurity, and machine-learning engineering;
-- has a relationship with a Meta data scientist and may be able to earn a referral;
 - needs to build credible skills and work samples before recruiting accelerates;
 - wants one place to track courses, projects, interview practice, networking, and applications.
 
 ## Product Point of View
 
-The workspace supports six distinct paths while making their shared CS foundation visible. Product analytics remains the recommended first experiment because of the user's Meta relationship, while software engineering, Java backend, cybersecurity, data engineering, and ML engineering each receive a complete curriculum rather than being treated as side notes.
+The workspace supports six distinct paths while making their shared CS foundation visible. Software engineering, Java backend, cybersecurity, data science, data engineering, and ML engineering each receive a complete curriculum rather than being treated as side notes, so the choice between them can be made on role fit rather than on whichever one happened to be documented.
 
 A referral is leverage for a prepared candidate, not a substitute for evidence. The product therefore prioritizes artifacts, role fit, and application cadence over certificates.
 

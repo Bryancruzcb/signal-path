@@ -1,13 +1,14 @@
 # Deploy the Vite build to GitHub Pages.
 #
-# Currently manual-only. To deploy automatically on every push to main,
-# add the following under `on:`:
-#
-#   push:
-#     branches: [main]
+# Deploys on every push to main. This used to be manual-only, which meant the
+# live site could serve a build older than the repo -- including content that
+# had already been removed from main. If a fix matters enough to commit, it
+# matters enough to publish.
 name: Deploy to GitHub Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

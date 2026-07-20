@@ -16,11 +16,7 @@ On `beforeunload`/`pagehide` it writes the live remaining seconds straight to `l
 
 **Labelling evidence by strength.** Every course claim carries the source it came from, tagged official / syllabus / student / inferred. Course access and recruiting practices change, so claims are labelled to be re-verified rather than trusted.
 
-<!-- SCREENSHOT: capture the "This week" view at 1440px wide with the Focus Bench timer mid-session
-     (a few minutes on the clock, not 25:00) and at least two course-readiness rows filled in.
-     Save as docs/images/this-week.png and replace this comment with:
-![Signal Path — the "This week" view](docs/images/this-week.png)
--->
+![Signal Path — the "This week" view, with the Focus Bench timer mid-session and two tasks banked](docs/images/this-week.png)
 
 ## Views
 

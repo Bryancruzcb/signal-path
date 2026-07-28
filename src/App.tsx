@@ -1165,15 +1165,17 @@ function App() {
                           aria-expanded={openWeeklyTaskId === task.id}
                           onClick={(event) => openWeeklyGuide(task.id, event.currentTarget)}
                         >
-                          <strong>{task.title}</strong>
-                          <span>{task.detail}</span>
-                        </button>
-                        <div className="weekly-task-meta">
-                          <span className="weekly-task-open" aria-hidden="true">
-                            Open guide <ChevronRight size={14} />
+                          <span className="weekly-task-copy">
+                            <strong>{task.title}</strong>
+                            <span>{task.detail}</span>
                           </span>
-                          <time>{task.duration}</time>
-                        </div>
+                          <span className="weekly-task-meta">
+                            <span className="weekly-task-open" aria-hidden="true">
+                              Open guide <ChevronRight size={14} />
+                            </span>
+                            <time>{task.duration}</time>
+                          </span>
+                        </button>
                       </div>
                     )
                   })}

@@ -582,7 +582,7 @@ p {
 
 .weekly-task {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 14px;
   min-height: 78px;
@@ -598,8 +598,13 @@ p {
 }
 
 .weekly-task-guide {
+  display: grid;
   width: 100%;
-  padding: 14px 4px;
+  min-height: 70px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -626,7 +631,7 @@ p {
   font-weight: 600;
 }
 
-.weekly-task-guide span {
+.weekly-task-copy > span {
   margin-top: 2px;
   color: var(--muted);
   font-size: 0.78rem;
@@ -653,7 +658,7 @@ p {
 }
 
 .weekly-task:hover .weekly-task-open,
-.weekly-task-guide:focus-visible + .weekly-task-meta .weekly-task-open {
+.weekly-task-guide:focus-visible .weekly-task-open {
   opacity: 1;
 }
 

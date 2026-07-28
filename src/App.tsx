@@ -15,6 +15,8 @@ import {
   ChartNoAxesCombined,
   Check,
   CheckCircle2,
+  ChevronRight,
+  CirclePlay,
   Clock3,
   Code2,
   Coffee,
@@ -282,6 +284,7 @@ function App() {
   const timerEndAtRef = useRef<number | null>(null)
 
   // Modal / UI states
+  const [openWeeklyTaskId, setOpenWeeklyTaskId] = useState<string | null>(null)
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)
   const [evidenceLegendOpen, setEvidenceLegendOpen] = useState(false)
   const [resourceQuery, setResourceQuery] = useState('')
@@ -304,6 +307,8 @@ function App() {
 
   // Import backup
   const importInputRef = useRef<HTMLInputElement>(null)
+  const weeklyDrawerCloseRef = useRef<HTMLButtonElement>(null)
+  const weeklyGuideReturnFocusRef = useRef<HTMLButtonElement | null>(null)
 
   // --- Derived Values ---
   const profile = pathProfiles.find((item) => item.id === selectedPath) ?? pathProfiles[0]
@@ -512,16 +517,31 @@ function App() {
   }, [toast])
 
   useEffect(() => {
-    if (!openModuleId && !evidenceLegendOpen) return undefined
+    if (!openWeeklyTaskId && !openModuleId && !evidenceLegendOpen) return undefined
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        setOpenWeeklyTaskId(null)
         setOpenModuleId(null)
         setEvidenceLegendOpen(false)
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [openModuleId, evidenceLegendOpen])
+  }, [openWeeklyTaskId, openModuleId, evidenceLegendOpen])
+
+  useEffect(() => {
+    if (!openWeeklyTaskId) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const focusTimer = window.setTimeout(() => weeklyDrawerCloseRef.current?.focus(), 0)
+
+    return () => {
+      window.clearTimeout(focusTimer)
+      document.body.style.overflow = previousOverflow
+      window.setTimeout(() => weeklyGuideReturnFocusRef.current?.focus(), 0)
+    }
+  }, [openWeeklyTaskId])
 
   // --- Handlers ---
   function navigate(view: AppWorkspaceView, path: PathId = selectedPath) {
@@ -548,7 +568,33 @@ function App() {
     setWeeklyTasksCompleted((current) => ({ ...current, [id]: !current[id] }))
     if (nowComplete) {
       setToast("Weekly step recorded. Keep the artifact—you may reuse it in class.")
+    } else {
+      setToast("Weekly step moved back to still learning.")
     }
+  }
+
+  function openWeeklyGuide(id: string, trigger: HTMLButtonElement) {
+    weeklyGuideReturnFocusRef.current = trigger
+    setOpenWeeklyTaskId(id)
+  }
+
+  function closeWeeklyGuide() {
+    setOpenWeeklyTaskId(null)
+  }
+
+  async function copyWeeklyPrompt(prompt: string, successMessage = "ChatGPT prompt copied.") {
+    try {
+      if (!navigator.clipboard) throw new Error("Clipboard API unavailable")
+      await navigator.clipboard.writeText(prompt)
+      setToast(successMessage)
+    } catch {
+      setToast("Could not copy automatically. Select the prompt text and copy it.")
+    }
+  }
+
+  function openChatGpt(prompt: string) {
+    window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer")
+    void copyWeeklyPrompt(prompt, "Prompt copied—paste it into ChatGPT.")
   }
 
   function toggleModuleMastery(id: string) {
@@ -814,6 +860,7 @@ function App() {
   }
 
   // Details for selected module dialog
+  const activeWeeklyTask = WEEKLY_TASKS.find((task) => task.id === openWeeklyTaskId)
   const activeModule = allSjsuModules.find((m) => m.id === openModuleId)
   const activeModuleCourse = openModuleId
     ? Object.entries(COURSES).find(([_, c]) => c.modules.some((m) => m.id === openModuleId))?.[1]
@@ -1108,12 +1155,25 @@ function App() {
                           id={`weekly-${task.id}`}
                           checked={complete}
                           onChange={() => toggleWeeklyTask(task.id)}
+                          aria-label={complete ? `Mark ${task.title} as still learning` : `Mark ${task.title} complete`}
                         />
-                        <label htmlFor={`weekly-${task.id}`}>
+                        <button
+                          className="weekly-task-guide"
+                          type="button"
+                          aria-haspopup="dialog"
+                          aria-controls="weekly-guide-drawer"
+                          aria-expanded={openWeeklyTaskId === task.id}
+                          onClick={(event) => openWeeklyGuide(task.id, event.currentTarget)}
+                        >
                           <strong>{task.title}</strong>
                           <span>{task.detail}</span>
-                        </label>
-                        <time>{task.duration}</time>
+                        </button>
+                        <div className="weekly-task-meta">
+                          <span className="weekly-task-open" aria-hidden="true">
+                            Open guide <ChevronRight size={14} />
+                          </span>
+                          <time>{task.duration}</time>
+                        </div>
                       </div>
                     )
                   })}
@@ -2290,6 +2350,147 @@ function App() {
           </section>
         )}
       </main>
+
+      {/* --- WEEKLY LEARNING GUIDE DRAWER --- */}
+      {activeWeeklyTask && (
+        <div
+          className="weekly-guide-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeWeeklyGuide()
+          }}
+        >
+          <aside
+            className="weekly-guide-drawer"
+            id="weekly-guide-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="weekly-guide-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="weekly-guide-header">
+              <div>
+                <p className="mono-label">WEEKLY SPRINT · LAB GUIDE</p>
+                <h2 id="weekly-guide-title">{activeWeeklyTask.title}</h2>
+                <span className="weekly-guide-duration">
+                  <Clock3 size={15} aria-hidden="true" />
+                  {durationToMinutes(activeWeeklyTask.duration)} minutes
+                </span>
+              </div>
+              <button
+                ref={weeklyDrawerCloseRef}
+                className="weekly-guide-close"
+                type="button"
+                aria-label="Close weekly guide"
+                onClick={closeWeeklyGuide}
+              >
+                <X size={20} />
+              </button>
+            </header>
+
+            <div className="weekly-guide-body">
+              <section className="weekly-guide-section">
+                <h3>Why this matters</h3>
+                <p className="weekly-guide-why">{activeWeeklyTask.why}</p>
+                <div className="weekly-guide-proof">
+                  <span className="mono-label">PROOF OF WORK TARGET</span>
+                  <strong>{activeWeeklyTask.deliverable}</strong>
+                </div>
+              </section>
+
+              <section className="weekly-guide-section">
+                <h3>Run the lab</h3>
+                <ol className="weekly-guide-steps">
+                  {activeWeeklyTask.steps.map((step, index) => (
+                    <li key={step.title}>
+                      <span className="weekly-guide-step-number" aria-hidden="true">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <strong>{step.title}</strong>
+                        <p>{step.detail}</p>
+                        {step.code && (
+                          <pre>
+                            <code>{step.code}</code>
+                          </pre>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+
+              <section className="weekly-guide-section">
+                <h3>Study resources</h3>
+                <div className="weekly-guide-resources">
+                  {activeWeeklyTask.resources.map((resource) => (
+                    <a
+                      className={`weekly-guide-resource is-${resource.kind}`}
+                      href={resource.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      key={resource.url}
+                    >
+                      <span className="weekly-guide-resource-icon" aria-hidden="true">
+                        {resource.kind === 'read'
+                          ? <BookOpenCheck size={20} />
+                          : <CirclePlay size={20} />}
+                      </span>
+                      <span>
+                        <strong>{resource.label}</strong>
+                        <small>{resource.meta}</small>
+                      </span>
+                      <ExternalLink size={16} aria-hidden="true" />
+                    </a>
+                  ))}
+                </div>
+              </section>
+
+              <section className="weekly-guide-chat">
+                <div className="weekly-guide-chat-heading">
+                  <BrainCircuit size={22} aria-hidden="true" />
+                  <h3>Ask ChatGPT</h3>
+                </div>
+                <p>{activeWeeklyTask.chatGptPrompt}</p>
+                <div className="weekly-guide-chat-actions">
+                  <button
+                    className="button button-secondary"
+                    type="button"
+                    onClick={() => void copyWeeklyPrompt(activeWeeklyTask.chatGptPrompt)}
+                  >
+                    <Copy size={15} /> Copy prompt
+                  </button>
+                  <button
+                    className="button weekly-guide-chat-open"
+                    type="button"
+                    onClick={() => openChatGpt(activeWeeklyTask.chatGptPrompt)}
+                  >
+                    Open ChatGPT <ExternalLink size={15} />
+                  </button>
+                </div>
+              </section>
+            </div>
+
+            <footer className="weekly-guide-footer">
+              <button className="button button-secondary" type="button" onClick={closeWeeklyGuide}>
+                {weeklyTasksCompleted[activeWeeklyTask.id] ? "Close guide" : "Still learning"}
+              </button>
+              <button
+                className="button button-primary"
+                type="button"
+                onClick={() => {
+                  toggleWeeklyTask(activeWeeklyTask.id)
+                  closeWeeklyGuide()
+                }}
+              >
+                <Check size={16} />
+                {weeklyTasksCompleted[activeWeeklyTask.id]
+                  ? "Mark as still learning"
+                  : "Mark complete"}
+              </button>
+            </footer>
+          </aside>
+        </div>
+      )}
 
       {/* --- DIALOG MODALS --- */}
       {/* 1. Module Dialog Details */}

@@ -1,8 +1,26 @@
+export type WeeklyTaskStep = {
+  title: string
+  detail: string
+  code?: string
+}
+
+export type WeeklyTaskResource = {
+  kind: 'read' | 'video'
+  label: string
+  meta: string
+  url: string
+}
+
 export type WeeklyTask = {
   id: string
   title: string
   detail: string
   duration: string
+  why: string
+  deliverable: string
+  steps: WeeklyTaskStep[]
+  resources: WeeklyTaskResource[]
+  chatGptPrompt: string
 }
 
 export type CourseModule = {
@@ -88,30 +106,274 @@ export const WEEKLY_TASKS: WeeklyTask[] = [
     title: "Set up your Linux workbench",
     detail: "Compile a C file with strict warnings and run it from the terminal.",
     duration: "45m",
+    why:
+      "Current CS 149 material expects you to work in C from a Linux terminal. A dependable compiler-and-shell setup removes friction before the operating-systems ideas get difficult.",
+    deliverable:
+      "A hello.c program that compiles with strict warnings, runs successfully, and leaves you with a saved command log.",
+    steps: [
+      {
+        title: "Confirm that you are in Linux",
+        detail:
+          "Open Ubuntu natively, through WSL 2 on Windows, or in a Linux virtual machine on macOS. The commands below assume an Ubuntu-style environment.",
+        code: "uname -a",
+      },
+      {
+        title: "Install the compiler toolchain",
+        detail:
+          "Update the package list and install GCC, Make, and the standard build tools.",
+        code: "sudo apt update && sudo apt install -y build-essential",
+      },
+      {
+        title: "Create one tiny C program",
+        detail:
+          "Save this as hello.c. Keeping the first program small makes the toolchain—not the code—the thing you are testing.",
+        code: "#include <stdio.h>\n\nint main(void) {\n  puts(\"workbench ready\");\n  return 0;\n}",
+      },
+      {
+        title: "Compile with strict warnings",
+        detail:
+          "A clean command prints nothing and creates an executable named hello. Fix every warning before continuing.",
+        code: "gcc -std=c17 -Wall -Wextra -Wpedantic hello.c -o hello",
+      },
+      {
+        title: "Run it and check the exit status",
+        detail:
+          "You should see “workbench ready” followed by exit=0. Save the commands and output in a text file or screenshot.",
+        code: "./hello\necho \"exit=$?\"",
+      },
+    ],
+    resources: [
+      {
+        kind: "read",
+        label: "The Linux Command Line",
+        meta: "Free book · start with Learning the Shell",
+        url: "https://linuxcommand.org/tlcl.php",
+      },
+      {
+        kind: "video",
+        label: "The 50 Most Popular Linux Commands",
+        meta: "freeCodeCamp video",
+        url: "https://www.youtube.com/watch?v=ZtqBQ68cfJc",
+      },
+    ],
+    chatGptPrompt:
+      "I am preparing for SJSU CS 149 and just set up an Ubuntu Linux workbench. Explain what happens when I run `gcc -std=c17 -Wall -Wextra -Wpedantic hello.c -o hello`, what each flag does, and how the shell finds and runs `./hello`. Then quiz me with three short terminal questions. Do not assume I already understand compilation, linking, executables, or exit codes.",
   },
   {
     id: "process-tree",
     title: "Draw and run a process tree",
     detail: "Use fork, exec, and wait—then predict the output before running it.",
     duration: "55m",
+    why:
+      "Processes and system calls appear early in operating-systems courses. Predicting the parent/child relationship before execution builds the mental model needed for scheduling, pipes, and signals.",
+    deliverable:
+      "A hand-drawn process tree plus a warning-clean C program whose observed PIDs and exit status match your corrected prediction.",
+    steps: [
+      {
+        title: "Draw the expected tree first",
+        detail:
+          "Start with one parent. After one fork, draw one child. Mark which branch receives 0 from fork and which receives the child PID.",
+      },
+      {
+        title: "Create process_tree.c",
+        detail:
+          "This program prints both identities, replaces the child with echo, and makes the parent wait for the child.",
+        code: "#include <stdio.h>\n#include <sys/wait.h>\n#include <unistd.h>\n\nint main(void) {\n  printf(\"parent pid=%ld\\n\", (long)getpid());\n  pid_t pid = fork();\n\n  if (pid == 0) {\n    printf(\"child pid=%ld parent=%ld\\n\", (long)getpid(), (long)getppid());\n    execlp(\"echo\", \"echo\", \"child replaced by exec\", NULL);\n    _exit(1);\n  }\n\n  int status = 0;\n  waitpid(pid, &status, 0);\n  printf(\"parent observed status=%d\\n\", WEXITSTATUS(status));\n  return 0;\n}",
+      },
+      {
+        title: "Compile, then predict the line order",
+        detail:
+          "Write down which lines must come before or after others and which order is not guaranteed.",
+        code: "gcc -std=c17 -Wall -Wextra -Wpedantic process_tree.c -o process_tree",
+      },
+      {
+        title: "Run it three times",
+        detail:
+          "Compare the PIDs and line ordering. Explain why waitpid constrains the final parent line but does not schedule every earlier print.",
+        code: "./process_tree",
+      },
+    ],
+    resources: [
+      {
+        kind: "read",
+        label: "fork(2) · Linux manual page",
+        meta: "Primary API reference",
+        url: "https://man7.org/linux/man-pages/man2/fork.2.html",
+      },
+      {
+        kind: "video",
+        label: "Unix Processes in C",
+        meta: "CodeVault video series",
+        url: "https://www.youtube.com/playlist?list=PLfqABt5AS4FkW5mOn2Tn9ZZLLDwA3kZUY",
+      },
+    ],
+    chatGptPrompt:
+      "Teach me fork, exec, and waitpid by walking through a parent process that forks one child, the child calls exec, and the parent waits. First ask me to draw and predict the process tree and output order. After I answer, correct my reasoning line by line. Focus on return values, separate address spaces, PID relationships, and which output ordering is or is not guaranteed.",
   },
   {
     id: "dns-capture",
     title: "Capture one DNS lookup",
     detail: "Use Wireshark to label the query, response, addresses, and timing.",
     duration: "45m",
+    why:
+      "DNS is an application-layer protocol you can observe directly. Capturing one lookup connects names, IP addresses, UDP ports, request IDs, and latency in a single piece of evidence.",
+    deliverable:
+      "One annotated Wireshark screenshot showing a DNS query and its matching response, including names, addresses, ports, records, and elapsed time.",
+    steps: [
+      {
+        title: "Start a focused capture",
+        detail:
+          "Open Wireshark, choose the interface carrying your traffic, begin capturing, and use the display filter below to hide unrelated packets.",
+        code: "dns",
+      },
+      {
+        title: "Generate one lookup",
+        detail:
+          "Run the command while the capture is active. If the answer is cached, try a different hostname.",
+        code: "nslookup example.com",
+      },
+      {
+        title: "Match query to response",
+        detail:
+          "Select the query and response with the same transaction ID. Record the source and destination IP addresses and UDP ports.",
+      },
+      {
+        title: "Label the answer and timing",
+        detail:
+          "Expand Domain Name System, identify the requested name and A or AAAA answer, then calculate the response delay from the two timestamps.",
+      },
+      {
+        title: "Save a privacy-safe artifact",
+        detail:
+          "Crop the screenshot to the two DNS packets and details you need. Do not publish unrelated traffic, private hostnames, or addresses.",
+      },
+    ],
+    resources: [
+      {
+        kind: "read",
+        label: "Official Wireshark User’s Guide",
+        meta: "Capture and display-filter reference",
+        url: "https://www.wireshark.org/docs/wsug_html_chunked/",
+      },
+      {
+        kind: "video",
+        label: "Learn Wireshark in 10 minutes",
+        meta: "Vinsloev Academy video",
+        url: "https://www.youtube.com/watch?v=lb1Dw0elw0Q",
+      },
+    ],
+    chatGptPrompt:
+      "I captured one DNS query and response in Wireshark. Explain how to read the transaction ID, query name, A/AAAA answers, source and destination IP addresses, UDP ports, TTL, and response time. Ask me to paste only those non-sensitive fields, then help me turn them into a short packet-by-packet explanation. Point out anything my capture cannot prove.",
   },
   {
     id: "tcp-echo",
     title: "Build a Python TCP echo pair",
     detail: "Send bytes across localhost and handle a clean disconnect.",
     duration: "70m",
+    why:
+      "A localhost echo pair exposes the smallest useful TCP lifecycle: bind, listen, accept, connect, send bytes, receive bytes, and close cleanly.",
+    deliverable:
+      "A server.py and client.py pair that echoes a byte message on localhost and exits cleanly when the client finishes.",
+    steps: [
+      {
+        title: "Create server.py",
+        detail:
+          "The server listens only on localhost, accepts one client, and echoes until recv returns empty bytes.",
+        code: "import socket\n\nwith socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:\n    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)\n    server.bind((\"127.0.0.1\", 5000))\n    server.listen()\n    print(\"listening on 127.0.0.1:5000\")\n\n    connection, address = server.accept()\n    with connection:\n        print(\"connected:\", address)\n        while data := connection.recv(1024):\n            connection.sendall(data)",
+      },
+      {
+        title: "Create client.py",
+        detail:
+          "The client connects, sends bytes, receives the echo, and signals that it has finished sending.",
+        code: "import socket\n\nwith socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:\n    client.connect((\"127.0.0.1\", 5000))\n    client.sendall(b\"hello from the client\")\n    print(client.recv(1024).decode())\n    client.shutdown(socket.SHUT_WR)",
+      },
+      {
+        title: "Run the server terminal",
+        detail:
+          "Leave this terminal waiting at the listening message.",
+        code: "python3 server.py",
+      },
+      {
+        title: "Run the client in a second terminal",
+        detail:
+          "You should see the echoed message. Both programs should then return to the shell without being force-killed.",
+        code: "python3 client.py",
+      },
+      {
+        title: "Explain the clean disconnect",
+        detail:
+          "Identify why recv eventually returns b'', what the context managers close, and why localhost still uses the TCP stack.",
+      },
+    ],
+    resources: [
+      {
+        kind: "read",
+        label: "Python socket documentation",
+        meta: "Primary API reference",
+        url: "https://docs.python.org/3/library/socket.html",
+      },
+      {
+        kind: "video",
+        label: "Python Socket Programming Tutorial",
+        meta: "Tech With Tim video",
+        url: "https://www.youtube.com/watch?v=3QiPPX-KeSc",
+      },
+    ],
+    chatGptPrompt:
+      "Coach me through a Python TCP echo client and server on 127.0.0.1. Explain socket, bind, listen, accept, connect, sendall, recv, shutdown, and close in lifecycle order. Use bytes—not strings—when discussing network I/O. Then show me how to recognize a clean disconnect and quiz me on what would change with UDP. Let me reason before you reveal each answer.",
   },
   {
     id: "teach-back",
     title: "Record a two-minute teach-back",
     detail: "Explain process vs. thread and TCP vs. UDP without notes.",
     duration: "35m",
+    why:
+      "Explaining without notes exposes gaps that recognition-based studying hides. A short recording also gives you a reusable way to measure whether your mental model is getting clearer.",
+    deliverable:
+      "A two-minute recording that accurately contrasts process vs. thread and TCP vs. UDP using one concrete example for each comparison.",
+    steps: [
+      {
+        title: "Write a four-line outline",
+        detail:
+          "One line each: what a process owns, what threads share, what TCP promises, and what UDP does not promise. Then put the outline away.",
+      },
+      {
+        title: "Choose two concrete examples",
+        detail:
+          "Use one program with worker threads for the first comparison and a file transfer versus a live game update for the second.",
+      },
+      {
+        title: "Record one uninterrupted take",
+        detail:
+          "Set a two-minute timer. Define each term, compare the trade-offs, and use both examples without reading notes.",
+      },
+      {
+        title: "Review with a strict rubric",
+        detail:
+          "Check for separate versus shared memory, isolation cost, ordered/reliable TCP byte streams, UDP datagrams, and the absence of a UDP delivery guarantee.",
+      },
+      {
+        title: "Record one corrected take",
+        detail:
+          "Fix the single largest gap. Keep both versions so you can hear the improvement.",
+      },
+    ],
+    resources: [
+      {
+        kind: "read",
+        label: "OSTEP · Threads introduction",
+        meta: "Free systems chapter",
+        url: "https://pages.cs.wisc.edu/~remzi/OSTEP/threads-intro.pdf",
+      },
+      {
+        kind: "video",
+        label: "TCP vs UDP Comparison",
+        meta: "PowerCert animated video",
+        url: "https://www.youtube.com/watch?v=uwoD5YsGACg",
+      },
+    ],
+    chatGptPrompt:
+      "Act as a skeptical CS 149/158A oral examiner. Ask me to explain process vs. thread and TCP vs. UDP in under two minutes without notes. Do not explain first. After my answer, grade accuracy, missing trade-offs, misuse of vocabulary, and quality of examples. Then give me a corrected 120-second outline and ask one follow-up question that tests whether I truly understand it.",
   },
 ]
 

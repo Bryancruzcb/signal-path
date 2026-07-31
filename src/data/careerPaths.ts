@@ -104,9 +104,9 @@ export const pathProfiles: PathProfile[] = [
     eyebrow: 'Turn behavior into product decisions',
     summary:
       'Use SQL, statistics, and clear communication to explain what users do and decide what a product team should change next.',
-    fit: 'Best if you enjoy ambiguous questions, metrics, experiments, and explaining evidence to non-technical teammates.',
+    fit: 'Best if you enjoy open-ended questions, metrics, experiments, and explaining results to non-technical teammates.',
     verdict:
-      'A credible internship target when your portfolio proves decision quality—not just notebooks or model accuracy.',
+      'A realistic internship target when your portfolio shows good decisions, not just notebooks or model accuracy.',
     duration: '16–20 weeks',
     weeklyHours: '8–10 hours',
     primaryOutput: 'A decision memo backed by a reproducible analysis',
@@ -119,7 +119,7 @@ export const pathProfiles: PathProfile[] = [
     toolchain: ['PostgreSQL', 'pandas', 'Jupyter', 'DuckDB', 'Tableau / Looker Studio'],
     roles: ['Data Science Intern', 'Product Analytics Intern', 'Data Analyst Intern', 'Decision Scientist Intern'],
     caution:
-      'Do not lead with a referral. Build proof first, then ask your contact for role calibration and a referral to a specific posting.',
+      'Do not start by asking for a referral. Build a strong project first, then ask whether you fit a specific role.',
     accent: '#ef6a52',
     soft: '#fff0eb',
     deep: '#8f2f20',
@@ -134,10 +134,10 @@ export const pathProfiles: PathProfile[] = [
       'Design batch and streaming systems that ingest, transform, test, document, and serve data for analysts and applications.',
     fit: 'Best if you like backend systems, SQL, reliability, schemas, and making messy processes repeatable.',
     verdict:
-      'A strong CS-student niche because it rewards software fundamentals plus demonstrable end-to-end systems work.',
+      'A strong option for a CS student because it combines software basics with complete data-system projects.',
     duration: '18–22 weeks',
     weeklyHours: '9–11 hours',
-    primaryOutput: 'A deployed, observable pipeline with tested data contracts',
+    primaryOutput: 'A deployed data pipeline with tests, monitoring, and clear data rules',
     interviewFocus: [
       'SQL, data modeling, and warehouse tradeoffs',
       'Batch versus streaming architecture',
@@ -162,7 +162,7 @@ export const pathProfiles: PathProfile[] = [
       'Build reliable web products across interfaces, APIs, databases, tests, delivery, and production diagnostics.',
     fit: 'Best if you want the broadest internship market and enjoy turning requirements into working, maintainable systems.',
     verdict:
-      'Keep this as the broad application lane even while specializing; recruiting for Summer 2027 is already active.',
+      'Keep applying to general software roles while you specialize. Summer 2027 recruiting has already started.',
     duration: '16–20 weeks',
     weeklyHours: '8–12 hours',
     primaryOutput: 'A deployed product with tests, CI, observability, and real users',
@@ -175,7 +175,7 @@ export const pathProfiles: PathProfile[] = [
     toolchain: ['GitHub', 'React', 'Node.js', 'PostgreSQL', 'Playwright', 'Docker'],
     roles: ['Software Engineer Intern', 'Full-Stack Intern', 'Frontend Intern', 'Backend Intern'],
     caution:
-      'Tutorial clones are weak evidence. Add users, constraints, failures, tests, and one measurable product outcome.',
+      'A copied tutorial is not enough. Add real users, limits, failure cases, tests, and one result you can measure.',
     accent: '#3974d9',
     soft: '#edf3ff',
     deep: '#214c9c',
@@ -190,7 +190,7 @@ export const pathProfiles: PathProfile[] = [
       'Use modern Java and Spring Boot to design typed APIs, transactional workflows, database boundaries, and resilient services.',
     fit: 'Best if you like structured code, backend logic, strong tooling, and enterprise or fintech systems.',
     verdict:
-      'Java is a useful recruiting wedge, but pair framework fluency with core CS and production-quality project evidence.',
+      'Java can help you stand out, but you still need core CS skills and a polished project.',
     duration: '16–20 weeks',
     weeklyHours: '8–10 hours',
     primaryOutput: 'A Spring Boot service with transactions, integration tests, docs, and recovery paths',
@@ -218,7 +218,7 @@ export const pathProfiles: PathProfile[] = [
       'Learn networks and operating systems, then practice detection, incident response, and secure software in authorized labs.',
     fit: 'Best if you enjoy investigation, systems internals, adversarial thinking, careful documentation, and continuous learning.',
     verdict:
-      'Choose a lane—defensive operations or application security—and prove it with a safe lab, detections, and reports.',
+      'Choose defensive operations or application security, then build a safe lab with detections and reports.',
     duration: '18–22 weeks',
     weeklyHours: '8–10 hours',
     primaryOutput: 'An authorized mini-SOC or AppSec lab with detections and incident reports',
@@ -309,11 +309,11 @@ export const resources: LearningResource[] = [
     category: 'Developer foundations',
     format: 'Free tool bundle',
     access: 'Free',
-    duration: '20 min to claim',
+    duration: 'Accepted',
     level: 'Foundation',
     url: 'https://education.github.com/pack',
-    why: 'Free GitHub Pro, Copilot, cloud credits, JetBrains licenses, and a domain while you are a student — real tooling for every project on this roadmap.',
-    action: 'Verify with your SJSU email, then claim Copilot and a cloud credit before your next project.',
+    why: 'Your approved student account gives you access to GitHub tools, coding workspaces, learning paths, and changing partner offers.',
+    action: 'Open the full pack, review every current offer, and activate one tool for your next project.',
     kind: 'Reference',
     evidence: 'Official',
     verified,
@@ -2759,34 +2759,34 @@ export type ApplicationAction = {
 export const sharedApplicationActions: ApplicationAction[] = [
   {
     id: 'applications-fresh',
-    title: 'Apply while the posting is fresh',
+    title: 'Apply soon after a role opens',
     detail:
-      'Check the tracker and company sites, confirm eligibility, then submit the strongest-fit roles before finishing every roadmap phase.',
+      'Check the tracker and company sites, confirm that you qualify, and apply to strong matches without waiting for every project to be finished.',
     cadence: 'Two 45-minute blocks each week',
     output: '8–10 targeted applications with source and last-checked date',
   },
   {
     id: 'applications-tailor',
-    title: 'Match evidence to the role',
+    title: 'Match your experience to the role',
     detail:
-      'Mirror the job’s truthful skill language in the top third of the resume and choose the project bullet that proves the closest work.',
+      'Use the job posting’s skill words when they honestly match your experience, and lead with the project bullet that best fits the role.',
     cadence: '15 minutes per priority role',
-    output: 'One role-specific resume version and three evidence matches',
+    output: 'One resume version for the role and three matching examples',
   },
   {
     id: 'applications-outreach',
-    title: 'Ask for calibration before referral',
+    title: 'Ask for feedback before a referral',
     detail:
-      'Send a concise note with the exact role, one-sentence fit, portfolio link, and one specific question; ask for a referral only after they can assess the work.',
+      'Send a short note with the exact role, why you may fit, a portfolio link, and one clear question. Ask for a referral only after they can review your work.',
     cadence: 'Two thoughtful messages each week',
     output: 'A warm conversation, useful feedback, or a well-earned referral request',
   },
   {
     id: 'applications-review',
-    title: 'Run the weekly feedback loop',
+    title: 'Review what happened this week',
     detail:
-      'Review application response, coding mistakes, interview questions, and outreach replies; change one resume, project, or practice behavior.',
+      'Review replies, coding mistakes, interview questions, and messages. Improve one thing in your resume, project, or practice plan.',
     cadence: '30 minutes every Friday',
-    output: 'One documented insight and one next-week experiment',
+    output: 'One lesson and one change to try next week',
   },
 ]

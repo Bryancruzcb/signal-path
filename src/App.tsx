@@ -11,7 +11,6 @@ import {
   ArrowUpRight,
   BookOpenCheck,
   BrainCircuit,
-  BriefcaseBusiness,
   ChartNoAxesCombined,
   Check,
   CheckCircle2,
@@ -26,10 +25,7 @@ import {
   ExternalLink,
   FileCheck2,
   Gauge,
-  GraduationCap,
-  LayoutDashboard,
-  Library,
-  Map as MapIcon,
+  Menu,
   Plus,
   Search,
   ShieldCheck,
@@ -38,7 +34,6 @@ import {
   Upload,
   X,
   Zap,
-  Compass,
   FileText,
 } from 'lucide-react'
 import {
@@ -59,6 +54,7 @@ import {
   SKILLS,
   PROJECT_STAGES,
   ELECTIVES,
+  GITHUB_STUDENT_PACK,
   SOURCES,
 } from './data/sjsuData'
 import { resources as roadmapResources } from './data/roadmap'
@@ -87,6 +83,91 @@ type AppWorkspaceView =
   | 'career-resources'
   | 'outreach-applications'
   | 'evidence-shelf'
+
+type WorkspaceRoute = {
+  id: AppWorkspaceView
+  code: string
+  label: string
+  shortLabel: string
+  context: string
+  title: string
+  group: 'Prepare' | 'Choose' | 'Launch'
+}
+
+const workspaceRoutes: WorkspaceRoute[] = [
+  {
+    id: 'dashboard',
+    code: '01',
+    label: 'This week',
+    shortLabel: 'Week',
+    context: 'Summer preparation / 2026',
+    title: 'This week',
+    group: 'Prepare',
+  },
+  {
+    id: 'courses',
+    code: '02',
+    label: 'Course prep',
+    shortLabel: 'Courses',
+    context: 'Waitlist preparation / CS 149 + CS 158A',
+    title: 'Course prep',
+    group: 'Prepare',
+  },
+  {
+    id: 'academic-plan',
+    code: '03',
+    label: 'Academic plan',
+    shortLabel: 'Plan',
+    context: 'Four semesters / one clear plan',
+    title: 'Academic plan',
+    group: 'Prepare',
+  },
+  {
+    id: 'campus-resources',
+    code: '04',
+    label: 'Campus resources',
+    shortLabel: 'Campus',
+    context: 'SJSU / official resources',
+    title: 'Campus resources',
+    group: 'Choose',
+  },
+  {
+    id: 'career-paths',
+    code: '05',
+    label: 'Career paths',
+    shortLabel: 'Paths',
+    context: 'Six career options / compare the work',
+    title: 'Career paths',
+    group: 'Choose',
+  },
+  {
+    id: 'career-resources',
+    code: '06',
+    label: 'Career resources',
+    shortLabel: 'Library',
+    context: 'Learning resources / start with the basics',
+    title: 'Learning resources',
+    group: 'Choose',
+  },
+  {
+    id: 'outreach-applications',
+    code: '07',
+    label: 'Applications',
+    shortLabel: 'Apply',
+    context: 'Summer 2027 / application timeline',
+    title: 'Applications',
+    group: 'Launch',
+  },
+  {
+    id: 'evidence-shelf',
+    code: '08',
+    label: 'Sources',
+    shortLabel: 'Sources',
+    context: 'Sources / where the information came from',
+    title: 'Sources',
+    group: 'Launch',
+  },
+]
 
 const pathIds = pathProfiles.map((path) => path.id)
 
@@ -221,13 +302,17 @@ function ViewIntro({
   action?: React.ReactNode
 }) {
   return (
-    <header className="page-intro compact-intro" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', paddingBottom: '28px', marginBottom: '36px' }}>
-      <div>
-        <p className="mono-label">{eyebrow}</p>
-        <h2 style={{ fontSize: '2.5rem', margin: '0' }}>{title}</h2>
-        <p style={{ marginTop: '8px', color: 'var(--ink-soft)' }}>{description}</p>
+    <header className="route-intro">
+      <div className="route-intro-index" aria-hidden="true">
+        <span />
+        <i />
       </div>
-      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+      <div className="route-intro-copy">
+        <p className="route-kicker">{eyebrow}</p>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      {action && <div className="route-intro-action">{action}</div>}
     </header>
   )
 }
@@ -287,6 +372,7 @@ function App() {
   const [openWeeklyTaskId, setOpenWeeklyTaskId] = useState<string | null>(null)
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)
   const [evidenceLegendOpen, setEvidenceLegendOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [resourceQuery, setResourceQuery] = useState('')
   const [resourceCategory, setResourceCategory] = useState('All')
   const [resourceKind, setResourceKind] = useState('All')
@@ -307,11 +393,19 @@ function App() {
 
   // Import backup
   const importInputRef = useRef<HTMLInputElement>(null)
+  const sidebarRef = useRef<HTMLElement>(null)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
+  const mobileNavCloseRef = useRef<HTMLButtonElement>(null)
   const weeklyDrawerCloseRef = useRef<HTMLButtonElement>(null)
+  const weeklyDrawerRef = useRef<HTMLElement>(null)
   const weeklyGuideReturnFocusRef = useRef<HTMLButtonElement | null>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const modalCloseRef = useRef<HTMLButtonElement>(null)
 
   // --- Derived Values ---
   const profile = pathProfiles.find((item) => item.id === selectedPath) ?? pathProfiles[0]
+  const activeRoute = workspaceRoutes.find((route) => route.id === activeView) ?? workspaceRoutes[0]
+  const activeRouteIndex = workspaceRoutes.findIndex((route) => route.id === activeView)
   const phases = roadmapsByPath[selectedPath]
   const projects = projectsByPath[selectedPath]
   const pathResources = useMemo(() => {
@@ -517,38 +611,198 @@ function App() {
   }, [toast])
 
   useEffect(() => {
-    if (!openWeeklyTaskId && !openModuleId && !evidenceLegendOpen) return undefined
+    if (!openWeeklyTaskId && !openModuleId && !evidenceLegendOpen && !mobileNavOpen) return undefined
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setOpenWeeklyTaskId(null)
         setOpenModuleId(null)
         setEvidenceLegendOpen(false)
+        setMobileNavOpen(false)
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [openWeeklyTaskId, openModuleId, evidenceLegendOpen])
+  }, [openWeeklyTaskId, openModuleId, evidenceLegendOpen, mobileNavOpen])
 
   useEffect(() => {
     if (!openWeeklyTaskId) return undefined
 
     const previousOverflow = document.body.style.overflow
+    const drawer = weeklyDrawerRef.current
+    const backgroundNodes = Array.from(
+      document.querySelectorAll<HTMLElement>('.sidebar, .app-main, .mobile-nav-backdrop')
+    )
+    const previousInert = backgroundNodes.map((node) => node.inert)
     document.body.style.overflow = 'hidden'
+    backgroundNodes.forEach((node) => {
+      node.inert = true
+    })
     const focusTimer = window.setTimeout(() => weeklyDrawerCloseRef.current?.focus(), 0)
+
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !drawer) return
+      const focusable = Array.from(
+        drawer.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => !element.hasAttribute('hidden'))
+      if (!focusable.length) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    drawer?.addEventListener('keydown', trapFocus)
 
     return () => {
       window.clearTimeout(focusTimer)
+      drawer?.removeEventListener('keydown', trapFocus)
       document.body.style.overflow = previousOverflow
+      backgroundNodes.forEach((node, index) => {
+        node.inert = previousInert[index]
+      })
       window.setTimeout(() => weeklyGuideReturnFocusRef.current?.focus(), 0)
     }
   }, [openWeeklyTaskId])
 
+  useEffect(() => {
+    if (!openModuleId && !evidenceLegendOpen) return undefined
+
+    const dialog = modalRef.current
+    const returnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
+    const previousOverflow = document.body.style.overflow
+    const backgroundNodes = Array.from(
+      document.querySelectorAll<HTMLElement>('.sidebar, .app-main, .mobile-nav-backdrop')
+    )
+    const previousInert = backgroundNodes.map((node) => node.inert)
+
+    document.body.style.overflow = 'hidden'
+    backgroundNodes.forEach((node) => {
+      node.inert = true
+    })
+
+    const focusTimer = window.setTimeout(() => modalCloseRef.current?.focus(), 0)
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !dialog) return
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => !element.hasAttribute('hidden'))
+      if (!focusable.length) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    dialog?.addEventListener('keydown', trapFocus)
+
+    return () => {
+      window.clearTimeout(focusTimer)
+      dialog?.removeEventListener('keydown', trapFocus)
+      document.body.style.overflow = previousOverflow
+      backgroundNodes.forEach((node, index) => {
+        node.inert = previousInert[index]
+      })
+      window.setTimeout(() => returnFocus?.focus(), 0)
+    }
+  }, [openModuleId, evidenceLegendOpen])
+
+  useEffect(() => {
+    if (!mobileNavOpen) return undefined
+    const previousOverflow = document.body.style.overflow
+    const returnFocus = mobileMenuButtonRef.current
+    const main = document.querySelector<HTMLElement>('.app-main')
+    const sidebar = sidebarRef.current
+    const previousMainInert = main?.inert ?? false
+    document.body.style.overflow = 'hidden'
+    if (main) main.inert = true
+    const focusTimer = window.setTimeout(() => mobileNavCloseRef.current?.focus(), 0)
+
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !sidebar) return
+      const focusable = Array.from(
+        sidebar.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => !element.hasAttribute('hidden'))
+      if (!focusable.length) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    sidebar?.addEventListener('keydown', trapFocus)
+
+    return () => {
+      window.clearTimeout(focusTimer)
+      sidebar?.removeEventListener('keydown', trapFocus)
+      document.body.style.overflow = previousOverflow
+      if (main) main.inert = previousMainInert
+      window.setTimeout(() => returnFocus?.focus(), 0)
+    }
+  }, [mobileNavOpen])
+
+  useEffect(() => {
+    const handleResponsiveNav = () => {
+      if (window.innerWidth > 768) {
+        setMobileNavOpen(false)
+        sidebarRef.current?.scrollTo({ top: 0 })
+      }
+    }
+
+    handleResponsiveNav()
+    window.addEventListener('resize', handleResponsiveNav)
+    return () => window.removeEventListener('resize', handleResponsiveNav)
+  }, [])
+
   // --- Handlers ---
   function navigate(view: AppWorkspaceView, path: PathId = selectedPath) {
-    setSelectedPath(path)
-    setActiveView(view)
-    window.location.hash = `/${view}`
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    const updateRoute = () => {
+      setSelectedPath(path)
+      setActiveView(view)
+      setMobileNavOpen(false)
+      sidebarRef.current?.scrollTo({ top: 0 })
+      window.location.hash = `/${view}`
+      window.scrollTo({
+        top: 0,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      })
+    }
+    const transitionDocument = document as Document & {
+      startViewTransition?: (update: () => void) => void
+    }
+    if (
+      transitionDocument.startViewTransition &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      transitionDocument.startViewTransition(updateRoute)
+    } else {
+      updateRoute()
+    }
   }
 
   function choosePath(path: PathId) {
@@ -567,7 +821,7 @@ function App() {
     const nowComplete = !weeklyTasksCompleted[id]
     setWeeklyTasksCompleted((current) => ({ ...current, [id]: !current[id] }))
     if (nowComplete) {
-      setToast("Weekly step recorded. Keep the artifact—you may reuse it in class.")
+      setToast("Weekly step finished. Keep what you made—you may reuse it in class.")
     } else {
       setToast("Weekly step moved back to still learning.")
     }
@@ -876,8 +1130,8 @@ function App() {
   function renderEvidenceLabel(type: 'official' | 'syllabus' | 'student' | 'resource') {
     const labels = {
       official: "Official",
-      syllabus: "Public syllabus",
-      student: "Student signal",
+      syllabus: "Class syllabus",
+      student: "Student opinion",
       resource: "Learning resource",
     }
     const className = type === 'resource' ? 'evidence-inferred' : `evidence-${type}`
@@ -885,102 +1139,94 @@ function App() {
   }
 
   return (
-    <div className="app-shell" style={themeStyle}>
-      {/* Sidebar Navigation */}
-      <aside className="sidebar" aria-label="Primary navigation">
+    <div
+      className={`app-shell ${timerRunning ? 'is-focusing' : ''}`}
+      style={themeStyle}
+      data-view={activeView}
+    >
+      {/* Route rail */}
+      <aside
+        ref={sidebarRef}
+        className={`sidebar ${mobileNavOpen ? 'is-mobile-open' : ''}`}
+        id="primary-sidebar"
+        aria-label="Primary navigation"
+      >
         <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 40 40" role="img">
-              <path d="M15 6h10M18 6v9L9.5 29.8A3.5 3.5 0 0 0 12.5 35h15a3.5 3.5 0 0 0 3-5.2L22 15V6" />
-              <path d="M13.5 27h13M16 22h8" />
+          <div className="brand-signal" aria-hidden="true">
+            <svg viewBox="0 0 48 48" role="img">
+              <path className="brand-signal-track" d="M6 24h11c5 0 5-12 10-12h15" />
+              <path className="brand-signal-track" d="M17 24c5 0 5 12 10 12h15" />
+              <circle cx="6" cy="24" r="3" />
+              <circle cx="42" cy="12" r="3" />
+              <circle cx="42" cy="36" r="3" />
             </svg>
           </div>
-          <div>
+          <div className="brand-copy">
             <strong>Signal Path</strong>
-            <span>SJSU &amp; Career Hub</span>
+            <span>Study &amp; career planner</span>
           </div>
+          <button
+            ref={mobileNavCloseRef}
+            className="sidebar-mobile-close"
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setMobileNavOpen(false)}
+          >
+            <X size={19} />
+          </button>
         </div>
 
-        <nav className="sidebar-nav" aria-label="Study dashboard views">
-          <button
-            className={`nav-item ${activeView === 'dashboard' ? 'is-active' : ''}`}
-            type="button"
-            onClick={() => navigate('dashboard')}
-          >
-            <LayoutDashboard />
-            <span>This week</span>
-          </button>
-          <button
-            className={`nav-item ${activeView === 'courses' ? 'is-active' : ''}`}
-            type="button"
-            onClick={() => navigate('courses')}
-          >
-            <BookOpenCheck />
-            <span>Course prep</span>
-          </button>
-          <button
-            className={`nav-item ${activeView === 'academic-plan' ? 'is-active' : ''}`}
-            type="button"
-            onClick={() => navigate('academic-plan')}
-          >
-            <MapIcon />
-            <span>Academic plan</span>
-          </button>
-          <button
-            className={`nav-item ${activeView === 'campus-resources' ? 'is-active' : ''}`}
-            type="button"
-            onClick={() => navigate('campus-resources')}
-          >
-            <GraduationCap />
-            <span>Campus resources</span>
-          </button>
-          <button
-            className={`nav-item ${activeView === 'career-paths' ? 'is-active' : ''}`}
-            type="button"
-            onClick={() => navigate('career-paths')}
-          >
-            <Compass />
-            <span>Career paths</span>
-          </button>
-          <button
-            className={`nav-item ${activeView === 'career-resources' ? 'is-active' : ''}`}
-            type="button"
-            onClick={() => navigate('career-resources')}
-          >
-            <Library />
-            <span>Career resources</span>
-          </button>
-          <button
-            className={`nav-item ${activeView === 'outreach-applications' ? 'is-active' : ''}`}
-            type="button"
-            onClick={() => navigate('outreach-applications')}
-          >
-            <BriefcaseBusiness />
-            <span>Applications</span>
-          </button>
-          <button
-            className={`nav-item ${activeView === 'evidence-shelf' ? 'is-active' : ''}`}
-            type="button"
-            onClick={() => navigate('evidence-shelf')}
-          >
-            <FileText />
-            <span>Evidence shelf</span>
-          </button>
+        <nav className="sidebar-nav route-rail" aria-label="Signal Path workspaces">
+          <div className="route-rail-line" aria-hidden="true">
+            <span
+              style={{
+                height: `${(Math.max(0, activeRouteIndex) / (workspaceRoutes.length - 1)) * 100}%`,
+              }}
+            />
+          </div>
+          {workspaceRoutes.map((route, index) => {
+            const isActive = route.id === activeView
+            const isPassed = index < activeRouteIndex
+            const showGroup = index === 0 || workspaceRoutes[index - 1].group !== route.group
+            return (
+              <div className="route-station-wrap" key={route.id}>
+                {showGroup && <p className="nav-group-label">{route.group}</p>}
+                <button
+                  className={`nav-item route-station ${isActive ? 'is-active' : ''} ${isPassed ? 'is-passed' : ''}`}
+                  type="button"
+                  aria-current={isActive ? 'page' : undefined}
+                  aria-label={route.label}
+                  onClick={() => navigate(route.id)}
+                >
+                  <span className="route-station-node" aria-hidden="true">
+                    <i />
+                  </span>
+                  <span className="route-station-code">{route.code}</span>
+                  <span className="route-station-copy">
+                    <strong>{route.label}</strong>
+                    <small>{route.shortLabel}</small>
+                  </span>
+                </button>
+              </div>
+            )
+          })}
         </nav>
 
-        {/* Live meters (mirrors the dashboard signal meters) */}
-        <div className="sidebar-meters" aria-label="Live progress meters">
-          <div className="sidebar-meter">
-            <span>Study banked</span>
-            <strong>{(studyMinutes / 60).toFixed(1)}<em>/{Math.round(totalPlannedMinutes / 60)}h</em></strong>
-          </div>
-          <div className="sidebar-meter">
-            <span>Fall classes</span>
-            <strong>{countdownReached(FALL_2026_FIRST_DAY) ? 'now' : `${daysUntil(FALL_2026_FIRST_DAY)}d`}</strong>
-          </div>
-          <div className="sidebar-meter">
-            <span>Apps open · est.</span>
-            <strong>{countdownReached(INTERNSHIP_APPS_OPEN) ? 'now' : `${daysUntil(INTERNSHIP_APPS_OPEN)}d`}</strong>
+        <div className="sidebar-meters rail-readout" aria-label="Saved preparation summary">
+          <span className="rail-readout-label">SAVED / LOCAL</span>
+          <div className="rail-readout-grid">
+            <div className="sidebar-meter">
+              <span>Banked</span>
+              <strong>{(studyMinutes / 60).toFixed(1)}<em>h</em></strong>
+            </div>
+            <div className="sidebar-meter">
+              <span>Classes</span>
+              <strong>{countdownReached(FALL_2026_FIRST_DAY) ? 'NOW' : `${daysUntil(FALL_2026_FIRST_DAY)}D`}</strong>
+            </div>
+            <div className="sidebar-meter">
+              <span>Apps</span>
+              <strong>{countdownReached(INTERNSHIP_APPS_OPEN) ? 'NOW' : `${daysUntil(INTERNSHIP_APPS_OPEN)}D`}</strong>
+            </div>
           </div>
         </div>
 
@@ -996,18 +1242,19 @@ function App() {
           <p id="sidebarProgressNote">
             {readinessScore > 30
               ? `${modulesCompleteCount} modules & ${completedRequired} career steps checked. Nice pace.`
-              : "Start with one small lab or career task. Momentum follows evidence."}
+              : "Start with one small lab or career task. Small steps add up."}
           </p>
         </section>
 
         <div className="sidebar-footer">
+            <span className="sidebar-footer-label">YOUR DATA</span>
           <span className="save-indicator">
             <i aria-hidden="true"></i> Saved on this device
           </span>
-          <button type="button" className="text-button" onClick={exportProgress} style={{ padding: '0', display: 'flex', gap: '5px', marginTop: '6px', fontSize: '0.74rem' }}>
+          <button type="button" className="text-button sidebar-data-action" onClick={exportProgress}>
             <Download size={13} /> Export Backup
           </button>
-          <button type="button" className="text-button" onClick={() => importInputRef.current?.click()} style={{ padding: '0', display: 'flex', gap: '5px', marginTop: '4px', fontSize: '0.74rem' }}>
+          <button type="button" className="text-button sidebar-data-action" onClick={() => importInputRef.current?.click()}>
             <Upload size={13} /> Import Backup
           </button>
           <input
@@ -1024,77 +1271,129 @@ function App() {
             id="resetProgress"
             type="button"
             onClick={resetAllProgress}
-            style={{ color: resetArmed ? '#ef6a52' : '', marginTop: '4px' }}
           >
             {resetArmed ? 'Confirm Reset' : 'Reset progress'}
           </button>
         </div>
       </aside>
 
+      <button
+        className={`mobile-nav-backdrop ${mobileNavOpen ? 'is-visible' : ''}`}
+        type="button"
+        aria-label="Close navigation"
+        tabIndex={mobileNavOpen ? 0 : -1}
+        onClick={() => setMobileNavOpen(false)}
+      />
+
       {/* Main Panel */}
       <main className="app-main" id="main-content">
         <header className="topbar">
-          <div>
-            <span className="topbar-context">
-              {activeView === 'dashboard' && 'Summer preparation · 2026'}
-              {activeView === 'courses' && 'Evidence-backed preparation'}
-              {activeView === 'academic-plan' && 'A cautious four-term plan'}
-              {activeView === 'campus-resources' && 'University resources & portals'}
-              {activeView === 'career-paths' && `${profile.name} lane`}
-              {activeView === 'career-resources' && `${pathResources.length} curated resources`}
-              {activeView === 'outreach-applications' && 'Summer 2027 recruitment'}
-              {activeView === 'evidence-shelf' && 'Research, with the labels left on'}
-            </span>
-            <h1 id="viewTitle">
-              {activeView === 'dashboard' && 'This week'}
-              {activeView === 'courses' && 'Course prep'}
-              {activeView === 'academic-plan' && 'Your academic roadmap'}
-              {activeView === 'campus-resources' && 'Campus Resources'}
-              {activeView === 'career-paths' && `${profile.shortName} path`}
-              {activeView === 'career-resources' && 'Curated learning'}
-              {activeView === 'outreach-applications' && 'Applications & Outreach'}
-              {activeView === 'evidence-shelf' && 'The evidence shelf'}
-            </h1>
+          <div className="topbar-heading">
+            <button
+              ref={mobileMenuButtonRef}
+              className="mobile-menu-button"
+              type="button"
+              aria-label="Open navigation"
+              aria-controls="primary-sidebar"
+              aria-expanded={mobileNavOpen}
+              onClick={() => setMobileNavOpen(true)}
+            >
+              <Menu size={20} />
+            </button>
+            <div className="topbar-route">
+              <span className="topbar-route-code">{activeRoute.code} / 08</span>
+              <div>
+                <span className="topbar-context">{activeRoute.context}</span>
+                <h1 id="viewTitle">
+                  {activeView === 'career-paths' ? `${profile.shortName} path` : activeRoute.title}
+                </h1>
+              </div>
+            </div>
           </div>
 
           <div className="topbar-actions">
+            <span className="topbar-save-state">
+              <i aria-hidden="true"></i>
+              Saved on this device
+            </span>
             {activeView !== 'evidence-shelf' && (
               <button className="certainty-button" type="button" onClick={() => navigate('evidence-shelf')}>
                 <FileText size={16} />
-                Research &amp; sources
+                View sources
               </button>
             )}
             <div className="profile-chip" aria-label="Personal workspace for Bryan">
-              BC
+              <span>BC</span>
+              <small>SJSU / CS</small>
             </div>
           </div>
         </header>
 
+        <div className="view-stage" key={activeView}>
         {/* --- VIEW: Dashboard --- */}
         {activeView === 'dashboard' && (
           <section className="view is-active" id="view-dashboard">
-            <header className="dashboard-intro">
-              <div>
-                <p className="mono-label" id="todayLabel">
-                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase()} · WEEKLY FIELD NOTE
+            <header className="dashboard-intro routing-hero">
+              <div className="routing-hero-copy">
+                <p className="route-kicker" id="todayLabel">
+                  01 / THIS WEEK · {new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}
                 </p>
-                <h2>Make the machine less mysterious.</h2>
+                <h2>
+                  Get ready
+                  <span>before the semester starts.</span>
+                </h2>
                 <p>
-                  Your waitlist does not have to be idle time. This week builds the exact bridge from CS 47 and CS 146 into processes, packets, and the systems underneath data work.
+                  Use the waitlist period to practice processes, networks, and the skills you will need for Summer 2027 internships.
                 </p>
                 <div className="dashboard-actions">
                   <button className="button button-primary button-large" type="button" onClick={() => navigate('courses')}>
-                    Continue studying
+                    Open course prep <ChevronRight size={16} />
                   </button>
                   <button className="button button-secondary" type="button" onClick={() => navigate('academic-plan')}>
-                    See your 4-term plan
+                    View academic plan
                   </button>
                 </div>
               </div>
-              <div className="readiness-stamp" aria-label="Current preparation status">
-                <span>READINESS</span>
-                <strong id="readinessScore">{readinessScore}</strong>
-                <small>/ 100</small>
+
+              <div className="routing-plot" aria-label={`Readiness ${readinessScore} out of 100`}>
+                <div className="routing-plot-score">
+                  <span>READINESS</span>
+                  <strong id="readinessScore">{String(readinessScore).padStart(2, '0')}</strong>
+                  <small>/100</small>
+                </div>
+                <svg viewBox="0 0 520 190" role="img" aria-label="Route from course preparation to recruiting">
+                  <defs>
+                    <linearGradient id="signal-route-gradient" x1="0" x2="1">
+                      <stop offset="0" stopColor="var(--signal)" />
+                      <stop offset={`${readinessScore}%`} stopColor="var(--signal)" />
+                      <stop offset={`${readinessScore}%`} stopColor="var(--rail-muted)" />
+                      <stop offset="1" stopColor="var(--rail-muted)" />
+                    </linearGradient>
+                  </defs>
+                  <path className="routing-plot-grid" d="M16 48H504M16 104H504M16 160H504" />
+                  <path className="routing-plot-path" d="M24 150C92 150 94 62 174 62H284C354 62 354 126 424 126H496" />
+                  <g className="routing-plot-node is-current">
+                    <circle cx="24" cy="150" r="7" />
+                    <text x="24" y="178">NOW</text>
+                  </g>
+                  <g className="routing-plot-node">
+                    <circle cx="174" cy="62" r="7" />
+                    <text x="174" y="42">COURSES</text>
+                  </g>
+                  <g className="routing-plot-node">
+                    <circle cx="424" cy="126" r="7" />
+                    <text x="424" y="154">EVIDENCE</text>
+                  </g>
+                  <g className="routing-plot-node">
+                    <circle cx="496" cy="126" r="7" />
+                    <text x="496" y="106">APPLY</text>
+                  </g>
+                </svg>
+                <p>
+                  {weeklyCompleteCount + modulesCompleteCount === 0
+                    ? 'Next step: finish one guided lab.'
+                    : `${weeklyCompleteCount + modulesCompleteCount} study step${weeklyCompleteCount + modulesCompleteCount === 1 ? '' : 's'} finished.`}
+                </p>
               </div>
             </header>
 
@@ -1108,6 +1407,7 @@ function App() {
                     ? 'Finish a focus block, weekly task, or lab to start the log'
                     : `${focusLog.sessions} focus block${focusLog.sessions === 1 ? '' : 's'} + ${totalCodexComplete} finished item${totalCodexComplete === 1 ? '' : 's'}`}
                 </span>
+                <span className="signal-meter-action">Start a focus block <ChevronRight size={14} /></span>
               </button>
               <button type="button" className="signal-meter" onClick={() => navigate('academic-plan')}>
                 <span className="mono-label">FALL 2026 CLASSES</span>
@@ -1119,6 +1419,7 @@ function App() {
                     ? 'Semester in session'
                     : 'Instruction starts Aug 19 · CS 149, CS 158A, GE R/S/V'}
                 </span>
+                <span className="signal-meter-action">View plan <ChevronRight size={14} /></span>
               </button>
               <button type="button" className="signal-meter" onClick={() => navigate('outreach-applications')}>
                 <span className="mono-label">SUMMER 2027 APPS</span>
@@ -1128,35 +1429,45 @@ function App() {
                 <span className="signal-meter-note">
                   {countdownReached(INTERNSHIP_APPS_OPEN)
                     ? 'Applications open — go apply'
-                    : 'Est. early Aug — big-tech postings open first; verify per company'}
+                    : 'Estimated early August — check each company for exact dates'}
                 </span>
+                <span className="signal-meter-action">Track applications <ChevronRight size={14} /></span>
               </button>
             </section>
 
             <div className="dashboard-grid">
               {/* Weekly Systems Sprint */}
               <section className="weekly-plan panel" aria-labelledby="weekly-plan-heading">
-                <div className="section-heading-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '16px' }}>
+                <div className="section-heading-row weekly-heading-row">
                   <div>
                     <p className="mono-label">THIS WEEK · {weeklyPlannedLabel}</p>
-                    <h3 id="weekly-plan-heading" style={{ fontSize: '1.4rem', margin: '0' }}>A small systems sprint</h3>
+                    <h3 id="weekly-plan-heading">Five small systems tasks</h3>
                   </div>
-                  <span className="plan-count" id="weeklyCount" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--muted)' }}>
-                    {weeklyCompleteCount} of {WEEKLY_TASKS.length} complete
-                  </span>
+                  <div className="weekly-progress-summary">
+                    <span className="plan-count" id="weeklyCount">
+                      {weeklyCompleteCount} of {WEEKLY_TASKS.length} complete
+                    </span>
+                    <div className="weekly-progress-track" aria-hidden="true">
+                      <span style={{ width: `${(weeklyCompleteCount / WEEKLY_TASKS.length) * 100}%` }}></span>
+                    </div>
+                  </div>
                 </div>
                 <div className="task-list" id="weeklyTasks">
                   {WEEKLY_TASKS.map((task) => {
                     const complete = Boolean(weeklyTasksCompleted[task.id])
+                    const guideOpen = openWeeklyTaskId === task.id
                     return (
-                      <div className={`weekly-task ${complete ? 'is-done' : ''}`} key={task.id}>
-                        <input
-                          type="checkbox"
-                          id={`weekly-${task.id}`}
-                          checked={complete}
-                          onChange={() => toggleWeeklyTask(task.id)}
-                          aria-label={complete ? `Mark ${task.title} as still learning` : `Mark ${task.title} complete`}
-                        />
+                      <div className={`weekly-task ${complete ? 'is-done' : ''} ${guideOpen ? 'is-open' : ''}`} key={task.id}>
+                        <label className="weekly-task-check" htmlFor={`weekly-${task.id}`}>
+                          <input
+                            type="checkbox"
+                            id={`weekly-${task.id}`}
+                            checked={complete}
+                            onChange={() => toggleWeeklyTask(task.id)}
+                            aria-label={complete ? `Mark ${task.title} as still learning` : `Mark ${task.title} complete`}
+                          />
+                          <span aria-hidden="true"><Check size={14} /></span>
+                        </label>
                         <button
                           className="weekly-task-guide"
                           type="button"
@@ -1171,7 +1482,7 @@ function App() {
                           </span>
                           <span className="weekly-task-meta">
                             <span className="weekly-task-open" aria-hidden="true">
-                              Open guide <ChevronRight size={14} />
+                              {guideOpen ? 'Guide open' : complete ? 'Done · Guide' : 'Guide'} <ChevronRight size={14} />
                             </span>
                             <time>{task.duration}</time>
                           </span>
@@ -1180,9 +1491,9 @@ function App() {
                     )
                   })}
                 </div>
-                <div className="plan-footer" style={{ borderTop: '1px solid var(--line)', marginTop: '20px', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ margin: '0', fontSize: '0.85rem', color: 'var(--ink-soft)', maxWidth: '70%' }}>
-                    <strong>Finish line:</strong> explain a process and a packet without leaning on vocabulary alone.
+                <div className="plan-footer">
+                  <p>
+                    <strong>Goal:</strong> explain a process and a network packet in your own words.
                   </p>
                   <button className="button button-primary" type="button" onClick={() => setOpenModuleId('os-processes')}>
                     Open first lab
@@ -1192,31 +1503,32 @@ function App() {
 
               {/* Focus Timer Bench */}
               <aside className="focus-bench panel" aria-labelledby="focus-heading">
-                <div className="focus-topline" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span className="mono-label">FOCUS BENCH</span>
-                  <span className="timer-status" id="timerStatus" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', fontWeight: '600', color: timerRunning ? 'var(--signal)' : 'var(--muted)' }}>
+                <div className="focus-topline">
+                  <span className="mono-label">FOCUS TIMER</span>
+                  <span className={`timer-status ${timerRunning ? 'is-running' : ''}`} id="timerStatus">
                     {timerRunning ? 'In focus' : timerRemaining < 25 * 60 ? 'Paused' : 'Ready'}
                   </span>
                 </div>
-                <h3 id="focus-heading" style={{ fontSize: '1.25rem', marginBottom: '8px' }}>One honest block.</h3>
-                <div className="timer" id="timerDisplay" style={{ fontSize: '4.8rem', fontFamily: 'var(--font-mono)', fontWeight: '500', textAlign: 'center', margin: '24px 0', letterSpacing: '-0.02em', color: timerRunning ? 'var(--primary-deep)' : 'var(--ink)' }}>
+                <h3 id="focus-heading">Focus for 25 minutes.</h3>
+                <div className="timer" id="timerDisplay">
                   {formatTimer(timerRemaining)}
                 </div>
-                <p id="timerPrompt" style={{ fontSize: '0.85rem', color: 'var(--muted)', textAlign: 'center', marginBottom: '24px' }}>
-                  Close the extra tabs. Compile one thing. Write down what surprised you.
+                <p id="timerPrompt" className="timer-prompt">
+                  Close extra tabs, finish one small task, and write down what you learned.
                 </p>
-                <div className="timer-controls" style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', marginBottom: '24px' }}>
-                  <button className="button button-primary" id="timerToggle" type="button" onClick={toggleTimer} style={{ minWidth: '130px' }}>
+                <div className="timer-controls">
+                  <button className="button button-primary" id="timerToggle" type="button" onClick={toggleTimer}>
                     {timerRunning ? 'Pause focus' : timerRemaining < 25 * 60 ? 'Resume focus' : 'Start focus'}
                   </button>
-                  <button className="icon-button" id="timerReset" type="button" aria-label="Reset focus timer" onClick={resetTimer} style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid var(--line)', background: 'var(--surface)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
+                  <button className="icon-button timer-reset" id="timerReset" type="button" aria-label="Reset focus timer" onClick={resetTimer}>
                     <X size={16} />
                   </button>
                 </div>
-                <div className="focus-rule" aria-hidden="true" style={{ borderTop: '1px solid var(--line)', margin: '0 -28px 20px' }}></div>
-                <blockquote style={{ fontStyle: 'italic', color: 'var(--muted)', fontSize: '0.9rem', textAlign: 'center', margin: '0', fontFamily: 'var(--font-editorial)' }}>
-                  “Mastery is being able to predict what happens next.”
-                </blockquote>
+                <div className="focus-session-summary">
+                  <span>{focusLog.sessions}</span>
+                  focus block{focusLog.sessions === 1 ? '' : 's'} banked
+                </div>
+                <blockquote>“Mastery is being able to predict what happens next.”</blockquote>
               </aside>
             </div>
 
@@ -1275,8 +1587,8 @@ function App() {
             <section className="career-path-snapshot panel" style={{ marginTop: '48px', padding: '28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
                 <div>
-                  <p className="mono-label">ACTIVE CAREER TRACK</p>
-                  <h3 style={{ fontSize: '1.6rem', margin: '0' }}>{profile.name} Lane</h3>
+                  <p className="mono-label">SELECTED CAREER PATH</p>
+                  <h3 style={{ fontSize: '1.6rem', margin: '0' }}>{profile.name}</h3>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button className="button button-secondary" type="button" onClick={() => navigate('career-paths')}>
@@ -1290,12 +1602,12 @@ function App() {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                 <div>
-                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>LANE VERDICT</span>
+                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>QUICK TAKE</span>
                   <p style={{ fontWeight: '600', fontSize: '1.05rem', color: 'var(--ink)' }}>{profile.verdict}</p>
                   <p style={{ color: 'var(--ink-soft)', fontSize: '0.94rem', margin: '8px 0 0' }}>{profile.summary}</p>
                 </div>
                 <div>
-                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>ROLE FIT</span>
+                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>WHY IT MAY FIT</span>
                   <p style={{ fontSize: '0.92rem', color: 'var(--ink-soft)', lineHeight: '1.5' }}>{profile.fit}</p>
                   <div style={{ marginTop: '16px' }}>
                     <span className="mono-label">WEEKLY TARGET</span>
@@ -1303,7 +1615,7 @@ function App() {
                   </div>
                 </div>
                 <div>
-                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>TARGET EVIDENCE</span>
+                  <span className="evidence-pill" style={{ marginBottom: '8px' }}>WHAT TO BUILD</span>
                   <p style={{ fontSize: '0.94rem', fontWeight: '500', color: 'var(--ink)' }}>{profile.primaryOutput}</p>
                   <div style={{ marginTop: '16px' }}>
                     <span className="mono-label">CAREER MILESTONES</span>
@@ -1318,9 +1630,9 @@ function App() {
               <div className="lab-note-index" aria-hidden="true">NOTE<br />07.14</div>
               <div>
                 <p className="mono-label">WHY THIS MATTERS FOR DATA SCIENCE</p>
-                <h3 id="lab-note-heading">The dataframe is not the whole machine.</h3>
+                <h3 id="lab-note-heading">Data science also needs systems skills.</h3>
                 <p>
-                  Operating systems explain why parallel jobs stall, memory spikes, and files become bottlenecks. Networks explain how data reaches an API, a cluster, or object storage. These courses are infrastructure literacy for serious data work—not detours from it.
+                  Operating systems explain why parallel jobs slow down, memory use grows, and files become bottlenecks. Networks explain how data reaches an API, a cluster, or cloud storage. These courses support real data work.
                 </p>
               </div>
               <button className="button button-secondary" type="button" onClick={() => navigate('academic-plan')}>
@@ -1333,31 +1645,31 @@ function App() {
         {/* --- VIEW: Course Prep --- */}
         {activeView === 'courses' && (
           <section className="view is-active" id="view-courses">
-            <header className="page-intro compact-intro" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', paddingBottom: '28px', marginBottom: '36px' }}>
-              <div>
-                <p className="mono-label">EVIDENCE-BACKED PREPARATION</p>
-                <h2 id="courses-heading" style={{ fontSize: '2.5rem', margin: '0' }}>Build the reflexes before the semester.</h2>
-                <p style={{ marginTop: '8px', color: 'var(--ink-soft)' }}>
-                  Each module ends in something you can run, inspect, or explain. Exact assignments vary by professor; the durable concepts do not.
-                </p>
-              </div>
-              <div className="course-selector" role="group" aria-label="Choose a course" style={{ display: 'flex', gap: '8px', flexShrink: '0' }}>
-                <button
-                  className={`course-selector-button ${activeCourse === 'cs149' ? 'is-active' : ''}`}
-                  type="button"
-                  onClick={() => setActiveCourse('cs149')}
-                >
-                  CS 149
-                </button>
-                <button
-                  className={`course-selector-button ${activeCourse === 'cs158' ? 'is-active' : ''}`}
-                  type="button"
-                  onClick={() => setActiveCourse('cs158')}
-                >
-                  CS 158A
-                </button>
-              </div>
-            </header>
+            <ViewIntro
+              eyebrow="02 / COURSE PREP"
+              title="Practice the basics before the semester."
+              description="Each module gives you something to run, inspect, or explain. Assignments may change by instructor, but the core ideas stay useful."
+              action={
+                <div className="course-selector" role="group" aria-label="Choose a course">
+                  <button
+                    className={`course-selector-button ${activeCourse === 'cs149' ? 'is-active' : ''}`}
+                    type="button"
+                    onClick={() => setActiveCourse('cs149')}
+                  >
+                    <span>TRACK A</span>
+                    CS 149
+                  </button>
+                  <button
+                    className={`course-selector-button ${activeCourse === 'cs158' ? 'is-active' : ''}`}
+                    type="button"
+                    onClick={() => setActiveCourse('cs158')}
+                  >
+                    <span>TRACK B</span>
+                    CS 158A
+                  </button>
+                </div>
+              }
+            />
 
             {/* Course details */}
             {(() => {
@@ -1376,11 +1688,11 @@ function App() {
                       <strong>{course.prereqs}</strong>
                     </div>
                     <div className="course-fact">
-                      <span>SAFEST STACK BET</span>
+                    <span>LIKELY TOOLS</span>
                       <strong>{course.likelyStack}</strong>
                     </div>
                     <div className="course-fact">
-                      <span>ASSESSMENT SHAPE</span>
+                      <span>HOW YOU MAY BE GRADED</span>
                       <strong>{course.assessment}</strong>
                       <p>{course.assessmentNote}</p>
                     </div>
@@ -1389,7 +1701,7 @@ function App() {
                   <div className="course-story">
                     <div>
                       <p className="mono-label">WHAT TO EXPECT</p>
-                      <h3>{course.tone === 'network' ? "Follow the packet, then build the path." : "Make the invisible machine observable."}</h3>
+                      <h3>{course.tone === 'network' ? "Follow a packet through the network." : "See what the operating system is doing."}</h3>
                       <p>{course.story}</p>
                     </div>
                     <div className="stack-list" aria-label="Likely languages and tools">
@@ -1401,11 +1713,11 @@ function App() {
 
                   <div className="module-list-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '48px', marginBottom: '24px', borderBottom: '1px solid var(--line)', paddingBottom: '12px' }}>
                     <div>
-                      <p className="mono-label">PREPARATION TRACK</p>
-                      <h3 style={{ fontSize: '1.4rem', margin: '0' }}>{completed} of {course.modules.length} modules mastered</h3>
+                      <p className="mono-label">PREP MODULES</p>
+                      <h3 style={{ fontSize: '1.4rem', margin: '0' }}>{completed} of {course.modules.length} modules finished</h3>
                     </div>
                     <p style={{ margin: '0', fontSize: '0.82rem', color: 'var(--muted)' }}>
-                      Mastered = concept note + working artifact + teach-back.
+                      Finished means you wrote a note, built a working example, and explained it.
                     </p>
                   </div>
 
@@ -1423,7 +1735,7 @@ function App() {
                             <p>{module.subtitle} · {module.duration}</p>
                           </div>
                           <p className="module-deliverable">
-                            <span>PROOF OF WORK</span>{module.deliverable}
+                            <span>WHAT YOU WILL MAKE</span>{module.deliverable}
                           </p>
                           <div className="module-action">
                             <button
@@ -1437,7 +1749,7 @@ function App() {
                               className="module-complete-button"
                               type="button"
                               onClick={() => toggleModuleMastery(module.id)}
-                              aria-label={`Mark ${module.title} ${isComplete ? 'incomplete' : 'mastered'}`}
+                              aria-label={`Mark ${module.title} ${isComplete ? 'not finished' : 'finished'}`}
                             >
                               {isComplete ? '✓' : '○'}
                             </button>
@@ -1455,26 +1767,24 @@ function App() {
         {/* --- VIEW: Academic Plan --- */}
         {activeView === 'academic-plan' && (
           <section className="view is-active" id="view-roadmap">
-            <header className="page-intro roadmap-intro page-intro-split">
-              <div>
-                <p className="mono-label">A CAUTIOUS FOUR-TERM PLAN</p>
-                <h2 id="roadmap-heading" style={{ fontSize: '2.5rem', margin: '0' }}>Protect the prerequisites. Aim the electives.</h2>
-                <p style={{ marginTop: '8px', color: 'var(--ink-soft)' }}>
-                  This is a planning hypothesis built around the courses you named—not an audit of your degree. Mark what you have already completed, then verify the result against MyProgress and a CS advisor.
-                </p>
-              </div>
-              <div className="adviser-note">
-                <span className="evidence-pill evidence-inferred">Planning recommendation</span>
-                <strong>Catalog year controls.</strong>
-                <p>Requirements can differ by admission year, transferred credit, and approved substitutions.</p>
-              </div>
-            </header>
+            <ViewIntro
+              eyebrow="03 / ACADEMIC PLAN"
+              title="Finish required courses. Choose useful electives."
+              description="This is a planning guide, not an official degree audit. Mark finished courses, then check MyProgress and talk with a CS advisor."
+              action={
+                <div className="adviser-note">
+                  <span>IMPORTANT</span>
+                  <strong>Your catalog year sets your requirements.</strong>
+                  <p>Requirements can change based on when you started, transfer credits, and approved course replacements.</p>
+                </div>
+              }
+            />
 
             {/* Checklist of what the planner knows */}
             <section className="known-courses" aria-labelledby="known-courses-heading" style={{ marginBottom: '36px' }}>
               <div>
                 <p className="mono-label">YOUR STARTING POINT</p>
-                <h3 id="known-courses-heading" style={{ fontSize: '1.25rem', marginTop: '0', marginBottom: '14px' }}>What the planner knows</h3>
+                <h3 id="known-courses-heading" style={{ fontSize: '1.25rem', marginTop: '0', marginBottom: '14px' }}>Courses you have finished</h3>
               </div>
               <div className="course-checklist" id="knownCourseChecklist">
                 {KNOWN_COURSES.map((course) => {
@@ -1497,17 +1807,18 @@ function App() {
             </section>
 
             {/* Roadmap Timeline */}
-            <div className="roadmap-timeline" id="roadmapTimeline" style={{ display: 'grid', gap: '16px' }}>
+            <div className="roadmap-timeline" id="roadmapTimeline">
               {ROADMAP.map((term) => {
                 const trackable = term.courses.filter((course) => course.id)
                 const doneCount = trackable.filter((course) => knownCourses[course.id as string]).length
+                const isTermComplete = trackable.length > 0 && doneCount === trackable.length
                 return (
-                  <article className="term-row" key={term.term}>
+                  <article className={`term-row ${isTermComplete ? 'is-complete' : ''}`} key={term.term}>
                     <div className="term-label">
                       <span>{term.year}</span>
                       <strong>{term.term}</strong>
-                      <span className={`term-progress ${doneCount === trackable.length && trackable.length > 0 ? 'is-complete' : ''}`}>
-                        {trackable.length > 0 && doneCount === trackable.length
+                      <span className={`term-progress ${isTermComplete ? 'is-complete' : ''}`}>
+                        {isTermComplete
                           ? '✓ Term complete'
                           : `${doneCount} of ${trackable.length} done`}
                       </span>
@@ -1516,7 +1827,7 @@ function App() {
                       {term.courses.map((course) => {
                         const isDone = Boolean(course.id && knownCourses[course.id])
                         return (
-                          <span
+                          <article
                             className={`roadmap-course ${course.kind === 'ds' ? 'is-ds' : course.kind === 'critical' ? 'is-critical' : ''} ${isDone ? 'is-done' : ''}`}
                             key={course.code}
                           >
@@ -1547,7 +1858,7 @@ function App() {
                                 <ArrowUpRight size={12} />
                               </a>
                             )}
-                          </span>
+                          </article>
                         )
                       })}
                     </div>
@@ -1562,7 +1873,7 @@ function App() {
             <div className="roadmap-footer-note" style={{ display: 'flex', gap: '10px', marginTop: '24px', padding: '16px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-sm)', color: 'var(--muted)', fontSize: '0.84rem' }}>
               <span aria-hidden="true">↳</span>
               <p style={{ margin: '0' }}>
-                <strong>Waitlist-safe rule:</strong> keep one degree-progressing backup for every constrained CS course. Never let a perfect elective sequence become a graduation bottleneck.
+                <strong>Waitlist tip:</strong> choose one backup that still counts toward your degree for every hard-to-get CS course.
               </p>
             </div>
 
@@ -1570,13 +1881,13 @@ function App() {
             <section className="data-specialization" style={{ marginTop: '64px', borderTop: '1px solid var(--line)', paddingTop: '48px' }}>
               <header className="page-intro data-intro" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                 <div>
-                  <p className="mono-label">YOUR SPECIALIZATION THREAD</p>
-                  <h2 style={{ fontSize: '2rem', margin: '0' }}>Data science, with systems underneath it.</h2>
+                  <p className="mono-label">DATA SCIENCE FOCUS</p>
+                  <h2 style={{ fontSize: '2rem', margin: '0' }}>Build data science on strong systems skills.</h2>
                   <p style={{ color: 'var(--ink-soft)', marginTop: '8px' }}>
-                    A durable niche is broader than model training: collect data reliably, store it deliberately, compute efficiently, and communicate uncertainty.
+                    Go beyond training models: collect data reliably, store it carefully, work efficiently, and explain uncertainty.
                   </p>
                 </div>
-                <div className="north-star-mark" aria-hidden="true" style={{ width: '48px', height: '48px', color: 'var(--primary)' }}>
+                <div className="north-star-mark" aria-hidden="true" style={{ width: '48px', height: '48px', color: 'var(--signal)' }}>
                   <svg viewBox="0 0 100 100" fill="currentColor">
                     <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" strokeWidth="2" />
                     <path d="m50 8 8 34 34 8-34 8-8 34-8-34-34-8 34-8z" />
@@ -1585,7 +1896,7 @@ function App() {
               </header>
 
               {/* Skill constellation */}
-              <section className="skill-constellation" aria-labelledby="constellation-heading" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px', marginBottom: '48px' }}>
+              <section className="skill-constellation" aria-label="Data science capability map">
                 {SKILLS.map((skill) => {
                   const goesToCoursePrep = skill.title === 'Systems'
                   return (
@@ -1615,15 +1926,15 @@ function App() {
               <section className="portfolio-bridge" aria-labelledby="portfolio-heading">
                 <div className="portfolio-copy">
                   <p className="mono-label">ONE PROJECT, FOUR SEMESTERS</p>
-                  <h3 id="portfolio-heading" style={{ fontSize: '1.5rem', marginTop: '0', marginBottom: '14px' }}>Build a campus data observatory.</h3>
+                  <h3 id="portfolio-heading" style={{ fontSize: '1.5rem', marginTop: '0', marginBottom: '14px' }}>Build a campus data project.</h3>
                   <p style={{ color: 'var(--ink-soft)', lineHeight: '1.6', fontSize: '0.94rem' }}>
-                    Start with a tiny networked collector. Grow it into a database-backed pipeline, then add analysis, reliability work, and an ML question. The same project can prove each layer instead of leaving you with disconnected class demos.
+                    Start with a small program that collects public data. Add a database, analysis, reliability checks, and one machine-learning question over time. One growing project can connect the skills from each class.
                   </p>
                 </div>
-                <ol className="project-stages" id="projectStages" style={{ margin: '0', padding: '0', listStyle: 'none', display: 'grid', gap: '20px' }}>
+                <ol className="project-stages" id="projectStages">
                   {PROJECT_STAGES.map((stage) => (
-                    <li className="project-stage" key={stage.title} style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '16px' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: '600', paddingTop: '3px' }}>{stage.term}</span>
+                    <li className="project-stage" key={stage.title}>
+                      <span className="project-stage-term">{stage.term}</span>
                       <div>
                         <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--ink)', marginBottom: '4px' }}>{stage.title}</strong>
                         <p style={{ margin: '0', fontSize: '0.92rem', color: 'var(--ink-soft)' }}>{stage.detail}</p>
@@ -1636,17 +1947,17 @@ function App() {
               {/* Elective lens table */}
               <section className="elective-lens" aria-labelledby="elective-lens-heading">
                 <div className="section-heading-row" style={{ marginBottom: '16px' }}>
-                  <p className="mono-label">ELECTIVE LENS</p>
-                  <h3 id="elective-lens-heading" style={{ fontSize: '1.4rem', margin: '0' }}>Choose courses by capability, not hype.</h3>
+                  <p className="mono-label">ELECTIVE GUIDE</p>
+                  <h3 id="elective-lens-heading" style={{ fontSize: '1.4rem', margin: '0' }}>Choose courses by the skills they teach.</h3>
                 </div>
                 <div className="elective-table-wrap" style={{ overflowX: 'auto', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                     <thead>
                       <tr style={{ background: 'var(--surface-muted)', borderBottom: '1px solid var(--line)' }}>
                         <th style={{ padding: '12px 16px', fontWeight: '600' }}>Course</th>
-                        <th style={{ padding: '12px 16px', fontWeight: '600' }}>Capability</th>
-                        <th style={{ padding: '12px 16px', fontWeight: '600' }}>Data-science payoff</th>
-                        <th style={{ padding: '12px 16px', fontWeight: '600' }}>Planning signal</th>
+                        <th style={{ padding: '12px 16px', fontWeight: '600' }}>Skill</th>
+                        <th style={{ padding: '12px 16px', fontWeight: '600' }}>Why it helps with data science</th>
+                        <th style={{ padding: '12px 16px', fontWeight: '600' }}>Priority</th>
                       </tr>
                     </thead>
                     <tbody id="electiveTable">
@@ -1669,19 +1980,15 @@ function App() {
         {/* --- VIEW: Campus Resources --- */}
         {activeView === 'campus-resources' && (
           <section className="view is-active" id="view-campus">
-            <header className="page-intro page-intro-split">
-              <div>
-                <p className="mono-label">UNIVERSITY RESOURCES & PORTALS</p>
-                <h2 style={{ fontSize: '2.5rem', margin: '0' }}>Campus Signals & Requirements</h2>
-                <p style={{ marginTop: '8px', color: 'var(--ink-soft)' }}>
-                  SJSU degree-audit, catalog, and career portals in one place.
-                </p>
-              </div>
-            </header>
+            <ViewIntro
+              eyebrow="04 / CAMPUS RESOURCES"
+              title="Check official SJSU sources first."
+              description="Find degree requirements, advising, department information, and career resources in one place."
+            />
 
             <div className="campus-sjsu-view" style={{ display: 'grid', gap: '32px' }}>
                 <section>
-                  <p className="mono-label">DEGREE AUDIT & PORTAL RIGHTS</p>
+                  <p className="mono-label">DEGREE REQUIREMENTS</p>
                   <h3 style={{ fontSize: '1.4rem', marginTop: '0', marginBottom: '16px' }}>SJSU Degree Requirements</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
                     <article className="card" style={{ padding: '20px', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1756,7 +2063,7 @@ function App() {
                     <div style={{ flex: 1 }}>
                       <strong style={{ fontSize: '1.15rem', display: 'block', marginBottom: '4px' }}>CS prerequisite tree diagram</strong>
                       <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0' }}>
-                        Visual map of SJSU CS department prerequisites (effective Fall 2022 onwards). Key to sequencing your remaining upper-division classes.
+                        A visual map of SJSU CS prerequisites, effective Fall 2022. Use it to plan the order of your remaining upper-division classes.
                       </p>
                     </div>
                     <a href="https://www.sjsu.edu/cs/docs/pdfs/prerequisite-chart-fall22.pdf" target="_blank" rel="noreferrer" className="button button-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -1807,15 +2114,15 @@ function App() {
             {/* Path details split */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', margin: '36px 0 48px' }}>
               <div className="panel" style={{ padding: '24px' }}>
-                <span className="mono-label">WHY THIS FITS</span>
+                <span className="mono-label">WHY IT MAY FIT YOU</span>
                 <p style={{ fontSize: '0.94rem', color: 'var(--ink-soft)', lineHeight: '1.6', margin: '8px 0 0' }}>{profile.fit}</p>
               </div>
               <div className="panel" style={{ padding: '24px' }}>
-                <span className="mono-label">TARGET PROOF</span>
+                <span className="mono-label">WHAT TO BUILD</span>
                 <p style={{ fontSize: '0.94rem', color: 'var(--ink-soft)', lineHeight: '1.6', margin: '8px 0 0' }}>{profile.primaryOutput}</p>
               </div>
               <div className="panel" style={{ padding: '24px' }}>
-                <span className="mono-label">INTERVIEW FOCUS</span>
+                <span className="mono-label">WHAT TO PRACTICE</span>
                 <ul style={{ margin: '8px 0 0', paddingLeft: '18px', fontSize: '0.9rem', color: 'var(--ink-soft)', display: 'grid', gap: '6px' }}>
                   {profile.interviewFocus.map((focus) => <li key={focus}>{focus}</li>)}
                 </ul>
@@ -1825,8 +2132,8 @@ function App() {
             {/* Roadmap Tasks Checklist */}
             <section className="career-roadmap-milestones" style={{ marginBottom: '64px' }}>
               <div style={{ borderBottom: '1px solid var(--line)', paddingBottom: '12px', marginBottom: '28px' }}>
-                <span className="mono-label">CAREER ROADMAP</span>
-                <h3 style={{ fontSize: '1.5rem', margin: '0' }}>Milestones &amp; Actions</h3>
+                <span className="mono-label">CAREER PLAN</span>
+                <h3 style={{ fontSize: '1.5rem', margin: '0' }}>Steps to take</h3>
               </div>
 
               <div className="roadmap-list" style={{ display: 'grid', gap: '24px' }}>
@@ -1853,7 +2160,7 @@ function App() {
 
                       <div className="phase-milestone" style={{ background: 'var(--surface-quiet)', padding: '12px 16px', borderRadius: 'var(--radius-sm)', display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', fontSize: '0.88rem' }}>
                         <Target size={16} style={{ color: 'var(--path-accent)', flexShrink: '0' }} />
-                        <span style={{ fontWeight: '600', color: 'var(--muted)' }}>Exit proof:</span>
+                        <span style={{ fontWeight: '600', color: 'var(--muted)' }}>Finish with:</span>
                         <p style={{ margin: '0', color: 'var(--ink)' }}>{phase.milestone}</p>
                       </div>
 
@@ -1866,15 +2173,15 @@ function App() {
                                 className="task-toggle"
                                 type="button"
                                 aria-pressed={isComplete}
+                                aria-label={`${isComplete ? 'Mark incomplete' : 'Mark complete'}: ${task.title}`}
                                 onClick={() => toggleTask(task.id)}
-                                style={{ width: '20px', height: '20px', borderRadius: '4px', border: '1px solid var(--line)', background: isComplete ? 'var(--path-deep)' : 'var(--surface)', color: 'white', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: '0', marginTop: '3px' }}
                               >
                                 {isComplete && <Check size={14} />}
                               </button>
                               <div className="roadmap-task-copy" style={{ flex: '1' }}>
                                 <div className="task-meta" style={{ display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
                                   <span>{task.effort}</span>
-                                  {task.optional && <span className="optional-tag" style={{ color: 'var(--primary)', fontWeight: '600' }}>Optional</span>}
+                                  {task.optional && <span className="optional-tag" style={{ color: 'var(--path-accent)', fontWeight: '600' }}>Optional</span>}
                                 </div>
                                 <h3 style={{ fontSize: '1.05rem', margin: '4px 0 0', fontWeight: '600' }}>{task.title}</h3>
                                 <p style={{ margin: '4px 0 0', fontSize: '0.92rem', color: 'var(--ink-soft)' }}>{task.detail}</p>
@@ -1898,7 +2205,7 @@ function App() {
             <section className="career-flagship-projects" style={{ marginBottom: '48px' }}>
               <div style={{ borderBottom: '1px solid var(--line)', paddingBottom: '12px', marginBottom: '28px' }}>
                 <span className="mono-label">PORTFOLIO PROJECTS</span>
-                <h3 style={{ fontSize: '1.5rem', margin: '0' }}>Build Work Worth Defending</h3>
+                <h3 style={{ fontSize: '1.5rem', margin: '0' }}>Build projects you can explain</h3>
               </div>
 
               <div className="project-stack" style={{ display: 'grid', gap: '32px' }}>
@@ -1909,7 +2216,7 @@ function App() {
                   const percent = Math.round((done / project.milestones.length) * 100)
 
                   return (
-                    <article className={`project-card ${pIdx === 0 ? 'featured' : ''}`} key={project.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', padding: '28px' }}>
+                    <article className={`project-card ${pIdx === 0 ? 'featured' : ''}`} key={project.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', padding: '28px' }}>
                       <header className="project-card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px' }}>
                         <div>
                           <div className="project-labels" style={{ display: 'flex', gap: '8px', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', marginBottom: '8px' }}>
@@ -1934,7 +2241,7 @@ function App() {
                       <div className="decision-callout" style={{ display: 'flex', gap: '12px', background: 'var(--surface-muted)', padding: '16px', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}>
                         <Target size={20} style={{ color: 'var(--path-accent)', flexShrink: '0', marginTop: '2px' }} />
                         <div>
-                          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>THE DECISION THIS PROJECT SUPPORTS</span>
+                          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>WHAT THIS PROJECT SHOWS</span>
                           <p style={{ margin: '4px 0 0', fontSize: '0.94rem', fontWeight: '600', color: 'var(--ink)' }}>{project.decision}</p>
                         </div>
                       </div>
@@ -1962,11 +2269,11 @@ function App() {
                         </div>
 
                         <div>
-                          <h4 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '12px' }}>Definition of done</h4>
+                          <h4 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '12px' }}>Done when</h4>
                           <ul style={{ listStyle: 'none', padding: '0', margin: '0', display: 'grid', gap: '8px', fontSize: '0.88rem' }}>
                             {project.acceptance.map((item) => (
                               <li key={item} style={{ display: 'flex', gap: '8px', alignItems: 'start', color: 'var(--ink-soft)' }}>
-                                <CheckCircle2 size={14} style={{ color: 'var(--success)', marginTop: '3px', flexShrink: '0' }} />
+                                <CheckCircle2 size={14} style={{ color: 'var(--mint-deep)', marginTop: '3px', flexShrink: '0' }} />
                                 <span>{item}</span>
                               </li>
                             ))}
@@ -1974,7 +2281,7 @@ function App() {
                         </div>
 
                         <div>
-                          <h4 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '12px' }}>Interview defense</h4>
+                          <h4 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '12px' }}>What to explain in interviews</h4>
                           <ul style={{ listStyle: 'none', padding: '0', margin: '0', display: 'grid', gap: '8px', fontSize: '0.88rem' }}>
                             {project.interviewProof.map((item) => (
                               <li key={item} style={{ display: 'flex', gap: '8px', alignItems: 'start', color: 'var(--ink-soft)' }}>
@@ -2007,9 +2314,9 @@ function App() {
         {activeView === 'career-resources' && (
           <section className="view is-active" id="view-resources">
             <ViewIntro
-              eyebrow={`${pathResources.length} curated resources`}
-              title="A career resource stack, not a content pile"
-              description="Start with one primary spine. Use practice to produce evidence, references to unblock work, and alternatives only when the main resource does not fit."
+              eyebrow={`${pathResources.length} learning resources`}
+              title="Use a few good resources, not everything"
+              description="Start with one main course or guide. Use practice resources to build skills, references when you get stuck, and alternatives only when the main resource does not work for you."
             />
 
             <section className="resource-controls" aria-label="Filter resources" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '28px 0', padding: '16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>
@@ -2029,9 +2336,9 @@ function App() {
                 </select>
               </label>
               <label style={{ minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Use it as</span>
+                <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Resource type</span>
                 <select value={resourceKind} onChange={(event) => setResourceKind(event.target.value)} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>
-                  {kinds.map((k) => <option key={k}>{k}</option>)}
+                  {kinds.map((k) => <option key={k} value={k}>{k === 'Primary spine' ? 'Start here' : k}</option>)}
                 </select>
               </label>
             </section>
@@ -2041,11 +2348,11 @@ function App() {
                 const status = resourceStates[res.id] ?? 'planned'
                 return (
                   <article className={`resource-card ${res.kind.toLowerCase().replaceAll(' ', '-')}`} key={res.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', padding: '24px', background: 'var(--surface)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="evidence-pill">{res.kind}</span>
+                    <div className="resource-evidence" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="evidence-pill">{res.kind === 'Primary spine' ? 'Start here' : res.kind}</span>
                       <span className={`evidence-pill ${res.evidence === 'Official' ? 'evidence-official' : 'evidence-student'}`}>{res.evidence}</span>
                     </div>
-                    <div>
+                    <div className="resource-summary">
                       <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{res.provider}</span>
                       <h2 style={{ fontSize: '1.25rem', margin: '4px 0 0', fontWeight: '600' }}>
                         <a href={res.url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', color: 'var(--ink)' }}>
@@ -2054,17 +2361,17 @@ function App() {
                       </h2>
                       <p style={{ margin: '8px 0 0', fontSize: '0.9rem', color: 'var(--ink-soft)', lineHeight: '1.55' }}>{res.why}</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                    <div className="resource-facts" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '0.78rem', color: 'var(--muted)' }}>
                       <span style={{ background: 'var(--surface-muted)', padding: '4px 8px', borderRadius: '4px' }}>{res.format}</span>
                       <span style={{ background: 'var(--surface-muted)', padding: '4px 8px', borderRadius: '4px' }}>{res.duration}</span>
                       <span style={{ background: 'var(--surface-muted)', padding: '4px 8px', borderRadius: '4px' }}>{res.level}</span>
                       <span style={{ background: 'var(--surface-muted)', padding: '4px 8px', borderRadius: '4px' }}>{res.access}</span>
                     </div>
-                    <div style={{ background: 'var(--surface-quiet)', padding: '10px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', display: 'flex', gap: '6px' }}>
+                    <div className="resource-action" style={{ background: 'var(--surface-quiet)', padding: '10px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', display: 'flex', gap: '6px' }}>
                       <Target size={14} style={{ color: 'var(--path-accent)', flexShrink: '0', marginTop: '2px' }} />
                       <p style={{ margin: '0' }}><strong>Do this:</strong> {res.action}</p>
                     </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="resource-progress" style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}>
                         <span>Progress</span>
                         <select
@@ -2105,176 +2412,209 @@ function App() {
 
         {/* --- VIEW: Outreach & Applications --- */}
         {activeView === 'outreach-applications' && (
-          <section className="view is-active" id="view-applications">
+          <section className="view is-active applications-route" id="view-applications">
             <ViewIntro
-              eyebrow="Summer 2027 campaign"
-              title="Track and secure your pipeline"
-              description="The market moves fast. Track your outreach, log applications, and keep yourself accountable with a weekly schedule checklist."
+              eyebrow="07 / APPLICATIONS"
+              title="Keep every application moving."
+              description="Save Summer 2027 openings, choose the next step, and track each application from start to finish."
             />
 
-            <section className="recruiting-banner" style={{ margin: '24px 0', padding: '20px', borderLeft: '4px solid var(--path-accent)', background: 'var(--surface)', borderRadius: 'var(--radius-sm)' }}>
-              <div><span className="live-dot" /><p className="eyebrow" style={{ margin: '0', fontSize: '0.64rem' }}>TIMING ALERT</p></div>
-              <h2 style={{ fontSize: '1.25rem', margin: '0', fontWeight: '600' }}>Summer 2027 recruitment is active now</h2>
-              <p style={{ margin: '6px 0 0', color: 'var(--ink-soft)', fontSize: '0.92rem' }}>
-                Postings refresh weekly. Put opportunities in the tracker immediately to prevent missed deadlines.
-              </p>
+            <section className="recruitment-calendar" aria-labelledby="recruitment-window-title">
+              <div className="recruitment-calendar-copy">
+                <span className="route-kicker">ESTIMATED APPLICATION DATES</span>
+                <h3 id="recruitment-window-title">Summer 2027 applications are starting</h3>
+                <p>Openings change every week. Save a role when you find it, then confirm the deadline on the company website.</p>
+              </div>
+              <div className="date-rail" aria-label="Recruitment timeline from July through November 2026">
+                {['JUL', 'AUG', 'SEP', 'OCT', 'NOV'].map((month, index) => (
+                  <div
+                    className={`date-rail-stop ${index === 0 ? 'is-current' : ''} ${index === 1 ? 'is-gate' : ''}`}
+                    key={month}
+                  >
+                    <span aria-hidden="true" />
+                    <strong>{month}</strong>
+                    {index === 0 && <small>NOW</small>}
+                    {index === 1 && <small>MANY OPEN</small>}
+                  </div>
+                ))}
+              </div>
             </section>
 
-            {/* Recruiting Signals */}
             {pathSignals.length > 0 && (
-              <section className="signal-section" style={{ marginBottom: '48px' }}>
-                <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid var(--line)', paddingBottom: '8px', marginBottom: '16px' }}>
-                  <div><p className="mono-label">LIVE TRACKING</p><h2 style={{ fontSize: '1.3rem', margin: '0' }}>Target postings &amp; checkpoints</h2></div>
-                </div>
-                <div className="signal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-                  {pathSignals.map((signal) => (
-                    <a href={signal.url} target="_blank" rel="noreferrer" className="signal-card" key={signal.id} style={{ display: 'block', padding: '16px', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', background: 'var(--surface)', textDecoration: 'none', color: 'inherit' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--path-accent)' }}>
-                        <span style={{ fontSize: '0.72rem', fontWeight: '600', fontFamily: 'var(--font-mono)' }}>{signal.tag}</span>
-                        <ExternalLink size={14} />
-                      </div>
-                      <h3 style={{ fontSize: '1.05rem', margin: '6px 0 4px', fontWeight: '600' }}>{signal.title}</h3>
-                      <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: 'var(--ink-soft)' }}>{signal.detail}</p>
-                      <small style={{ display: 'block', fontSize: '0.74rem', color: 'var(--muted)' }}>{signal.source}</small>
+              <section className="posting-track" aria-labelledby="posting-track-title">
+                <header className="track-section-heading">
+                  <span className="track-section-index">A</span>
+                  <div>
+                    <p className="route-kicker">PLACES TO CHECK</p>
+                    <h3 id="posting-track-title">Internship listings and company pages</h3>
+                  </div>
+                  <span>{pathSignals.length} verified lead{pathSignals.length === 1 ? '' : 's'}</span>
+                </header>
+                <div className="posting-track-line">
+                  {pathSignals.map((signal, index) => (
+                    <a href={signal.url} target="_blank" rel="noreferrer" className="posting-ticket" key={signal.id}>
+                      <span className="posting-ticket-node" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                      <span className="posting-ticket-copy">
+                        <small>{signal.tag}</small>
+                        <strong>{signal.title}</strong>
+                        <span>{signal.detail}</span>
+                        <em>{signal.source}</em>
+                      </span>
+                      <ExternalLink size={15} aria-hidden="true" />
                     </a>
                   ))}
                 </div>
               </section>
             )}
 
-            <div className="application-layout">
-              <section className="application-main">
-                {/* Application Form */}
-                <form id="application-form" className="application-form" onSubmit={addApplication} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', padding: '24px', background: 'var(--surface)', marginBottom: '32px' }}>
-                  <h3 style={{ fontSize: '1.25rem', margin: '0 0 16px', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>Log an Application</h3>
-                  <div className="form-grid">
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <span>Company *</span>
-                      <input required value={company} onChange={(event) => setCompany(event.target.value)} placeholder="Company name" style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: '4px' }} />
-                    </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <span>Role *</span>
-                      <input required value={role} onChange={(event) => setRole(event.target.value)} placeholder={profile.roles[0]} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: '4px' }} />
-                    </label>
-                    <label className="wide" style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <span>Job posting link</span>
-                      <input type="url" value={jobUrl} onChange={(event) => setJobUrl(event.target.value)} placeholder="https://..." style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: '4px' }} />
-                    </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <span>Date applied</span>
-                      <input type="date" value={applicationDate} onChange={(event) => setApplicationDate(event.target.value)} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: '4px' }} />
-                    </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <span>Status</span>
-                      <select value={applicationStatus} onChange={(event) => setApplicationStatus(event.target.value as ApplicationStatus)} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: '4px' }}>
-                        {statusOptions.map((status) => <option key={status}>{status}</option>)}
-                      </select>
-                    </label>
-                    <label className="wide" style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <span>Next action step</span>
-                      <input value={nextStep} onChange={(event) => setNextStep(event.target.value)} placeholder="Tailor resume, schedule follow up, prepare SQL..." style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: '4px' }} />
-                    </label>
-                  </div>
-                  <button className="button button-primary" type="submit" style={{ marginTop: '20px' }}>
-                    <Plus size={16} /> Save application
-                  </button>
-                </form>
-
-                {/* Applications list */}
-                <div className="application-list" style={{ display: 'grid', gap: '12px' }}>
-                  {pathApplications.map((app) => (
-                    <article className="application-card" key={app.id} style={{ display: 'flex', gap: '14px', alignItems: 'center', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: '16px', background: 'var(--surface)' }}>
-                      <div className="company-avatar" style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--path-soft)', color: 'var(--path-deep)', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-mono)', fontWeight: '600', flexShrink: '0' }}>
-                        {app.company.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div style={{ flex: '1', minWidth: '0' }}>
-                        <span style={{ fontSize: '0.74rem', color: 'var(--muted)', display: 'block' }}>{app.company}</span>
-                        <h4 style={{ fontSize: '1.05rem', margin: '2px 0 0', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.role}</h4>
-                        <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--muted)' }}>
-                          {app.nextStep ? `Next: ${app.nextStep}` : 'No next action logged'} · {app.date}
-                        </p>
-                      </div>
-                      <select
-                        aria-label={`Status for ${app.company}`}
-                        value={app.status}
-                        onChange={(event) => updateApplication(app.id, event.target.value as ApplicationStatus)}
-                        style={{ padding: '6px', border: '1px solid var(--line)', borderRadius: '4px', fontSize: '0.8rem' }}
-                      >
-                        {statusOptions.map((status) => <option key={status}>{status}</option>)}
-                      </select>
-                      {app.url && (
-                        <a href={app.url} target="_blank" rel="noreferrer" style={{ color: 'var(--muted)', padding: '4px' }}>
-                          <ExternalLink size={16} />
-                        </a>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setApplications((current) => current.filter((item) => item.id !== app.id))}
-                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </article>
-                  ))}
-                  {!pathApplications.length && (
-                    <div className="empty-state" style={{ textAlign: 'center', padding: '36px', border: '2px dashed var(--line)', borderRadius: 'var(--radius-sm)' }}>
-                      <BriefcaseBusiness size={28} style={{ color: 'var(--muted)', margin: '0 auto 8px' }} />
-                      <h4 style={{ fontSize: '1.1rem', margin: '0' }}>No applications logged for this path</h4>
-                      <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: 'var(--muted)' }}>Add opportunities to stay organized.</p>
-                    </div>
-                  )}
+            <section className="application-capture" aria-labelledby="capture-application-title">
+              <header className="track-section-heading">
+                <span className="track-section-index">B</span>
+                <div>
+                  <p className="route-kicker">ADD AN APPLICATION</p>
+                  <h3 id="capture-application-title">Save an opportunity</h3>
                 </div>
+                <span>Stored on this device</span>
+              </header>
+              <form id="application-form" className="dispatch-form" onSubmit={addApplication}>
+                <label>
+                  <span>Company *</span>
+                  <input required value={company} onChange={(event) => setCompany(event.target.value)} placeholder="Company" />
+                </label>
+                <label>
+                  <span>Role *</span>
+                  <input required value={role} onChange={(event) => setRole(event.target.value)} placeholder={profile.roles[0]} />
+                </label>
+                <label className="dispatch-form-url">
+                  <span>Posting</span>
+                  <input type="url" value={jobUrl} onChange={(event) => setJobUrl(event.target.value)} placeholder="https://…" />
+                </label>
+                <label>
+                  <span>Date</span>
+                  <input type="date" value={applicationDate} onChange={(event) => setApplicationDate(event.target.value)} />
+                </label>
+                <label>
+                  <span>Stage</span>
+                  <select value={applicationStatus} onChange={(event) => setApplicationStatus(event.target.value as ApplicationStatus)}>
+                    {statusOptions.map((status) => <option key={status}>{status}</option>)}
+                  </select>
+                </label>
+                <label className="dispatch-form-next">
+                  <span>Next step</span>
+                  <input value={nextStep} onChange={(event) => setNextStep(event.target.value)} placeholder="Tailor resume, follow up, prepare SQL…" />
+                </label>
+                <button className="dispatch-submit" type="submit">
+                  <Plus size={16} />
+                  Save application
+                </button>
+              </form>
+            </section>
+
+            <section className="recruitment-pipeline" aria-labelledby="recruitment-pipeline-title">
+              <header className="track-section-heading">
+                <span className="track-section-index">C</span>
+                <div>
+                  <p className="route-kicker">APPLICATIONS / {profile.shortName.toUpperCase()}</p>
+                  <h3 id="recruitment-pipeline-title">Application progress</h3>
+                </div>
+                <span>{pathApplications.length} opportunity{pathApplications.length === 1 ? '' : 'ies'}</span>
+              </header>
+              <div className="pipeline-tracks">
+                {statusOptions.map((status, statusIndex) => {
+                  const stageApplications = pathApplications.filter((application) => application.status === status)
+                  return (
+                    <section className={`pipeline-stage stage-${status.toLowerCase()}`} key={status}>
+                      <header>
+                        <span>{String(statusIndex + 1).padStart(2, '0')}</span>
+                        <strong>{status}</strong>
+                        <em>{stageApplications.length}</em>
+                      </header>
+                      <div className="pipeline-stage-rail" aria-hidden="true"><i /></div>
+                      <div className="pipeline-stage-tickets">
+                        {stageApplications.map((app) => (
+                          <article className="application-ticket" key={app.id}>
+                            <div className="application-ticket-id">
+                              <span>{app.company.slice(0, 2).toUpperCase()}</span>
+                              <time>{app.date}</time>
+                            </div>
+                            <h4>{app.role}</h4>
+                            <p>{app.nextStep || 'Choose the next action.'}</p>
+                            <div className="application-ticket-actions">
+                              <select
+                                aria-label={`Status for ${app.company}`}
+                                value={app.status}
+                                onChange={(event) => updateApplication(app.id, event.target.value as ApplicationStatus)}
+                              >
+                                {statusOptions.map((option) => <option key={option}>{option}</option>)}
+                              </select>
+                              {app.url && (
+                                <a href={app.url} target="_blank" rel="noreferrer" aria-label={`Open ${app.company} posting`}>
+                                  <ExternalLink size={15} />
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                aria-label={`Delete ${app.company} application`}
+                                onClick={() => setApplications((current) => current.filter((item) => item.id !== app.id))}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </article>
+                        ))}
+                        {!stageApplications.length && (
+                          <span className="pipeline-empty">No applications here</span>
+                        )}
+                      </div>
+                    </section>
+                  )
+                })}
+              </div>
+            </section>
+
+            <div className="application-operations">
+              <section className="role-destinations" aria-labelledby="role-destinations-title">
+                <p className="route-kicker">JOB TITLES</p>
+                <h3 id="role-destinations-title">Search these titles</h3>
+                <ol>
+                  {profile.roles.map((roleName, index) => (
+                    <li key={roleName}>
+                      <span>{String(index + 1).padStart(2, '0')}</span>
+                      <strong>{roleName}</strong>
+                      <ArrowUpRight size={15} aria-hidden="true" />
+                    </li>
+                  ))}
+                </ol>
               </section>
 
-              <aside className="application-aside" style={{ display: 'grid', gap: '20px', alignContent: 'start' }}>
-                <section className="career-card panel" style={{ padding: '20px' }}>
-                  <span className="mono-label">SEARCH TITLES</span>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }}>
-                    {profile.roles.map((rName) => (
-                      <span key={rName} style={{ padding: '6px 10px', background: 'var(--surface-muted)', borderRadius: '4px', fontSize: '0.78rem' }}>
-                        {rName}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="career-card panel" style={{ padding: '20px' }}>
-                  <span className="mono-label">WEEKLY CADENCE</span>
-                  <div style={{ display: 'grid', gap: '12px', marginTop: '12px' }}>
-                    {sharedApplicationActions.map((action, idx) => (
-                      <div key={action.id} style={{ display: 'flex', gap: '10px' }}>
-                        <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--path-soft)', color: 'var(--path-deep)', display: 'grid', placeItems: 'center', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', fontWeight: '600', flexShrink: '0' }}>
-                          {idx + 1}
-                        </span>
-                        <div>
-                          <strong style={{ display: 'block', fontSize: '0.9rem' }}>{action.title}</strong>
-                          <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--ink-soft)' }}>{action.detail}</p>
-                          <small style={{ display: 'block', fontSize: '0.7rem', color: 'var(--path-accent)', marginTop: '4px', fontWeight: '600' }}>{action.cadence}</small>
-                        </div>
+              <section className="cadence-loop" aria-labelledby="cadence-loop-title">
+                <p className="route-kicker">WEEKLY ROUTINE</p>
+                <h3 id="cadence-loop-title">Keep making progress</h3>
+                <ol>
+                  {sharedApplicationActions.map((action, index) => (
+                    <li key={action.id}>
+                      <span className="cadence-node">{String(index + 1).padStart(2, '0')}</span>
+                      <div>
+                        <strong>{action.title}</strong>
+                        <p>{action.detail}</p>
+                        <small>{action.cadence}</small>
                       </div>
-                    ))}
-                  </div>
-                </section>
+                    </li>
+                  ))}
+                </ol>
+              </section>
 
-                {selectedPath === 'data-science' && (
-                  <section className="career-card panel" style={{ padding: '20px', background: 'var(--surface-quiet)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--path-accent)' }}>
-                      <GraduationCap size={18} />
-                      <span className="mono-label" style={{ margin: '0' }}>REFERRAL STRATEGY</span>
-                    </div>
-                    <h3 style={{ fontSize: '1.15rem', margin: '12px 0 6px', fontWeight: '600' }}>Ask for calibration first</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
-                      Always build context with a contact and verify your skills before asking for direct referral leverage.
-                    </p>
-                    <blockquote style={{ padding: '10px', background: 'var(--surface)', borderLeft: '2px solid var(--path-accent)', fontSize: '0.78rem', fontStyle: 'italic', margin: '14px 0', lineHeight: '1.6' }}>
-                      {referralDraft}
-                    </blockquote>
-                    <button className="button button-secondary" type="button" onClick={copyReferral} style={{ width: '100%' }}>
-                      <Copy size={14} /> Copy draft
-                    </button>
-                  </section>
-                )}
-              </aside>
+              {selectedPath === 'data-science' && (
+                <section className="calibration-note" aria-labelledby="calibration-note-title">
+                  <p className="route-kicker">ASKING FOR HELP</p>
+                  <h3 id="calibration-note-title">Ask for feedback before a referral.</h3>
+                  <p>Share the exact role and ask if your experience fits before asking for a referral.</p>
+                  <blockquote>{referralDraft}</blockquote>
+                  <button className="button button-secondary" type="button" onClick={copyReferral}>
+                    <Copy size={14} /> Copy conversation draft
+                  </button>
+                </section>
+              )}
             </div>
           </section>
         )}
@@ -2282,22 +2622,78 @@ function App() {
         {/* --- VIEW: Evidence Shelf (Sources) --- */}
         {activeView === 'evidence-shelf' && (
           <section className="view is-active" id="view-sources">
-            <header className="page-intro sources-intro" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', paddingBottom: '28px', marginBottom: '36px' }}>
-              <div>
-                <p className="mono-label">RESEARCH, WITH THE LABELS LEFT ON</p>
-                <h2 id="sources-heading" style={{ fontSize: '2.5rem', margin: '0' }}>The evidence shelf</h2>
-                <p style={{ marginTop: '8px', color: 'var(--ink-soft)' }}>
-                  Course details change by term and instructor. This shelf makes it clear what is official, what came from a public syllabus, what students reported, and what this dashboard inferred.
-                </p>
-              </div>
-              <div className="source-updated" style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', display: 'block' }}>Research checked</span>
-                <strong style={{ fontSize: '1.1rem', display: 'block' }}>July 11, 2026</strong>
-                <button className="text-button" id="openEvidenceLegend" type="button" onClick={() => setEvidenceLegendOpen(true)} style={{ marginTop: '4px' }}>
-                  What the labels mean
-                </button>
-              </div>
-            </header>
+            <ViewIntro
+              eyebrow="08 / SOURCES"
+              title="Know where the information comes from."
+              description="Course details and student benefits can change. Each item shows its source, so you can separate official information, class syllabi, student opinions, and study suggestions."
+              action={
+                <div className="source-updated">
+                  <span>LAST CHECKED</span>
+                  <strong>29 JUL 2026</strong>
+                  <button className="text-button" id="openEvidenceLegend" type="button" onClick={() => setEvidenceLegendOpen(true)}>
+                    What do these labels mean?
+                  </button>
+                </div>
+              }
+            />
+
+            <section className="student-pack-panel" aria-labelledby="student-pack-title">
+              <header className="student-pack-header">
+                <div className="student-pack-copy">
+                  <span className="student-pack-status">
+                    <CheckCircle2 size={15} aria-hidden="true" />
+                    Accepted
+                  </span>
+                  <p className="mono-label">YOUR GITHUB EDUCATION BENEFITS</p>
+                  <h3 id="student-pack-title">Use your GitHub Student Developer Pack</h3>
+                  <p>
+                    Your student account is approved. Open the full pack to see every current offer,
+                    then activate the tools that help with your classes, portfolio, and job search.
+                  </p>
+                </div>
+                <div className="student-pack-actions">
+                  <a
+                    className="button button-primary"
+                    href={GITHUB_STUDENT_PACK.packUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Code2 size={16} aria-hidden="true" />
+                    View every pack offer
+                    <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                  <a
+                    className="button student-pack-benefits-button"
+                    href={GITHUB_STUDENT_PACK.benefitsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Manage my benefits
+                    <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                  <span>Checked {GITHUB_STUDENT_PACK.checked}</span>
+                </div>
+              </header>
+
+              <ul className="student-pack-resources" aria-label="GitHub Student Developer Pack resources">
+                {GITHUB_STUDENT_PACK.resources.map((resource) => (
+                  <li key={resource.title}>
+                    <a href={resource.url} target="_blank" rel="noreferrer">
+                      <span>
+                        <strong>{resource.title}</strong>
+                        <small>{resource.detail}</small>
+                      </span>
+                      <ArrowUpRight size={16} aria-hidden="true" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="student-pack-note">
+                Partner offers and redemption rules can change. The full GitHub pack page is the
+                current source for every available benefit.
+              </p>
+            </section>
 
             <div className="source-toolbar" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
               <label className="search-field" style={{ flex: '1', minWidth: '240px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', background: 'var(--surface)' }}>
@@ -2311,7 +2707,7 @@ function App() {
                 />
               </label>
 
-              <div className="source-filters" role="group" aria-label="Filter by evidence type" style={{ display: 'flex', gap: '6px' }}>
+              <div className="source-filters" role="group" aria-label="Filter by source type" style={{ display: 'flex', gap: '6px' }}>
                 {(['all', 'official', 'syllabus', 'student', 'resource'] as const).map((filter) => (
                   <button
                     key={filter}
@@ -2319,7 +2715,13 @@ function App() {
                     className={`source-filter ${sourceFilter === filter ? 'is-active' : ''}`}
                     onClick={() => setSourceFilter(filter)}
                   >
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    {{
+                      all: 'All',
+                      official: 'Official',
+                      syllabus: 'Syllabi',
+                      student: 'Students',
+                      resource: 'Resources',
+                    }[filter]}
                   </button>
                 ))}
               </div>
@@ -2336,7 +2738,7 @@ function App() {
                   <span className="source-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--muted)', minWidth: '120px', textAlign: 'right' }}>
                     {source.meta}
                   </span>
-                  <a className="source-link" href={source.url} target="_blank" rel="noreferrer" aria-label={`Open ${source.title}`} style={{ display: 'grid', placeItems: 'center', width: '32px', height: '32px', borderRadius: '4px', background: 'var(--surface-quiet)', color: 'var(--muted)' }}>
+                  <a className="source-link" href={source.url} target="_blank" rel="noreferrer" aria-label={`Open ${source.title}`}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '15px' }}>
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />
                     </svg>
@@ -2351,6 +2753,7 @@ function App() {
             </div>
           </section>
         )}
+        </div>
       </main>
 
       {/* --- WEEKLY LEARNING GUIDE DRAWER --- */}
@@ -2362,6 +2765,7 @@ function App() {
           }}
         >
           <aside
+            ref={weeklyDrawerRef}
             className="weekly-guide-drawer"
             id="weekly-guide-drawer"
             role="dialog"
@@ -2371,12 +2775,17 @@ function App() {
           >
             <header className="weekly-guide-header">
               <div>
-                <p className="mono-label">WEEKLY SPRINT · LAB GUIDE</p>
+                <p className="mono-label">WEEKLY TASK · STEP-BY-STEP GUIDE</p>
                 <h2 id="weekly-guide-title">{activeWeeklyTask.title}</h2>
-                <span className="weekly-guide-duration">
-                  <Clock3 size={15} aria-hidden="true" />
-                  {durationToMinutes(activeWeeklyTask.duration)} minutes
-                </span>
+                <div className="weekly-guide-meta">
+                  <span className="weekly-guide-duration">
+                    <Clock3 size={15} aria-hidden="true" />
+                    {durationToMinutes(activeWeeklyTask.duration)} minutes
+                  </span>
+                  <span className={`weekly-guide-status ${weeklyTasksCompleted[activeWeeklyTask.id] ? 'is-complete' : ''}`}>
+                    {weeklyTasksCompleted[activeWeeklyTask.id] ? 'Complete' : 'Not started'}
+                  </span>
+                </div>
               </div>
               <button
                 ref={weeklyDrawerCloseRef}
@@ -2390,11 +2799,16 @@ function App() {
             </header>
 
             <div className="weekly-guide-body">
+              <p className="sr-only" aria-live="polite">
+                {weeklyTasksCompleted[activeWeeklyTask.id]
+                  ? `${activeWeeklyTask.title} is marked complete.`
+                  : `${activeWeeklyTask.title} is still in progress.`}
+              </p>
               <section className="weekly-guide-section">
                 <h3>Why this matters</h3>
                 <p className="weekly-guide-why">{activeWeeklyTask.why}</p>
                 <div className="weekly-guide-proof">
-                  <span className="mono-label">PROOF OF WORK TARGET</span>
+                  <span className="mono-label">WHAT YOU WILL MAKE</span>
                   <strong>{activeWeeklyTask.deliverable}</strong>
                 </div>
               </section>
@@ -2479,12 +2893,12 @@ function App() {
               <button
                 className="button button-primary"
                 type="button"
-                onClick={() => {
-                  toggleWeeklyTask(activeWeeklyTask.id)
-                  closeWeeklyGuide()
-                }}
+                aria-pressed={Boolean(weeklyTasksCompleted[activeWeeklyTask.id])}
+                onClick={() => toggleWeeklyTask(activeWeeklyTask.id)}
               >
-                <Check size={16} />
+                {weeklyTasksCompleted[activeWeeklyTask.id]
+                  ? <X size={16} />
+                  : <Check size={16} />}
                 {weeklyTasksCompleted[activeWeeklyTask.id]
                   ? "Mark as still learning"
                   : "Mark complete"}
@@ -2498,13 +2912,13 @@ function App() {
       {/* 1. Module Dialog Details */}
       {activeModule && activeModuleCourse && (
         <div className="dialog-overlay" style={{ position: 'fixed', inset: '0', zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'grid', placeItems: 'center', padding: '20px' }} onClick={() => setOpenModuleId(null)}>
-          <div className="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="module-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: '28px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+          <div ref={modalRef} className="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="module-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', padding: '28px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
             <header className="dialog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
               <div>
                 <span className="mono-label" style={{ color: 'var(--path-accent)' }}>{activeModuleCourse.code} · {activeModuleCourse.title}</span>
                 <h2 id="module-dialog-title" style={{ fontSize: '1.4rem', margin: '4px 0 0', fontWeight: '600' }}>{activeModule.title}</h2>
               </div>
-              <button className="icon-button" type="button" aria-label="Close module" onClick={() => setOpenModuleId(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
+              <button ref={modalCloseRef} className="icon-button" type="button" aria-label="Close module" onClick={() => setOpenModuleId(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
                 <X size={20} />
               </button>
             </header>
@@ -2512,7 +2926,7 @@ function App() {
               <p className="dialog-intro" style={{ fontSize: '1.02rem', lineHeight: '1.6', color: 'var(--ink)' }}>{activeModule.why}</p>
               
               <section className="dialog-section" style={{ marginTop: '20px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px' }}>Your proof of work</h3>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px' }}>What you will make</h3>
                 <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
                   <strong>{activeModule.deliverable}</strong> · expected time {activeModule.duration}.
                 </p>
@@ -2546,7 +2960,7 @@ function App() {
                   type="button"
                   onClick={() => toggleModuleMastery(activeModule.id)}
                 >
-                  {modulesCompleted[activeModule.id] ? "Mark as still learning" : "Mark as mastered"}
+                  {modulesCompleted[activeModule.id] ? "Mark as not finished" : "Mark as finished"}
                 </button>
               </div>
             </div>
@@ -2557,13 +2971,13 @@ function App() {
       {/* 2. Evidence Legend Dialog */}
       {evidenceLegendOpen && (
         <div className="dialog-overlay" style={{ position: 'fixed', inset: '0', zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'grid', placeItems: 'center', padding: '20px' }} onClick={() => setEvidenceLegendOpen(false)}>
-          <div className="dialog-shell dialog-shell-narrow" role="dialog" aria-modal="true" aria-labelledby="legend-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+          <div ref={modalRef} className="dialog-shell dialog-shell-narrow" role="dialog" aria-modal="true" aria-labelledby="legend-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
             <header className="dialog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
               <div>
-                <span className="mono-label">READING THE RESEARCH</span>
-                <h2 id="legend-dialog-title" style={{ fontSize: '1.3rem', margin: '4px 0 0', fontWeight: '600' }}>Four levels of certainty</h2>
+                <span className="mono-label">ABOUT THESE SOURCES</span>
+                <h2 id="legend-dialog-title" style={{ fontSize: '1.3rem', margin: '4px 0 0', fontWeight: '600' }}>What each label means</h2>
               </div>
-              <button className="icon-button" type="button" aria-label="Close evidence guide" onClick={() => setEvidenceLegendOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
+              <button ref={modalCloseRef} className="icon-button" type="button" aria-label="Close evidence guide" onClick={() => setEvidenceLegendOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
                 <X size={20} />
               </button>
             </header>
@@ -2571,25 +2985,25 @@ function App() {
               <article style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
                 <span className="evidence-pill evidence-official">Official</span>
                 <p style={{ margin: '0', fontSize: '0.88rem', color: 'var(--ink-soft)' }}>
-                  Current SJSU department or catalog information. Strongest for course identity, description, and offering patterns.
+                  Information from SJSU departments or the catalog. Use this first for course names, requirements, and schedules.
                 </p>
               </article>
               <article style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
-                <span className="evidence-pill evidence-syllabus">Public syllabus</span>
+                <span className="evidence-pill evidence-syllabus">Class syllabus</span>
                 <p style={{ margin: '0', fontSize: '0.88rem', color: 'var(--ink-soft)' }}>
-                  A real section from a named term. Strong for that instructor and semester; useful but not a promise about yours.
+                  A syllabus from a real class and semester. It shows how that instructor taught the course, but your class may be different.
                 </p>
               </article>
               <article style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
-                <span className="evidence-pill evidence-student">Student signal</span>
+                <span className="evidence-pill evidence-student">Student opinion</span>
                 <p style={{ margin: '0', fontSize: '0.88rem', color: 'var(--ink-soft)' }}>
-                  Anecdotal experience. Helpful for workload texture, never treated as representative fact.
+                  One student's experience. Helpful for context, but it may not represent everyone.
                 </p>
               </article>
               <article style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
-                <span className="evidence-pill evidence-inferred">Lab recommendation</span>
+                <span className="evidence-pill evidence-inferred">Study suggestion</span>
                 <p style={{ margin: '0', fontSize: '0.88rem', color: 'var(--ink-soft)' }}>
-                  An editorial preparation choice derived from the evidence and durable computer-science fundamentals.
+                  A study suggestion based on the sources and core computer science skills.
                 </p>
               </article>
             </div>
@@ -2599,8 +3013,8 @@ function App() {
 
       {/* Toast Alert */}
       {toast && (
-        <div className="toast" role="status" style={{ position: 'fixed', right: '24px', bottom: '24px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '9px', padding: '12px 18px', background: 'var(--primary-deep)', color: 'white', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: '500', boxShadow: 'var(--shadow-float)' }}>
-          <CheckCircle2 size={16} style={{ color: 'var(--path-accent)' }} />
+        <div className="toast" role="status">
+          <CheckCircle2 size={16} />
           <span>{toast}</span>
         </div>
       )}

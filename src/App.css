@@ -108,6 +108,7 @@ textarea:focus-visible {
 
 .app-shell {
   --sidebar-width: 244px;
+  --sidebar-offset: var(--sidebar-width);
   min-height: 100vh;
   background: var(--paper);
   isolation: isolate;
@@ -115,7 +116,7 @@ textarea:focus-visible {
 
 .app-shell::before {
   position: fixed;
-  inset: 0 0 0 var(--sidebar-width);
+  inset: 0 0 0 var(--sidebar-offset);
   z-index: -1;
   content: "";
   pointer-events: none;
@@ -139,16 +140,24 @@ textarea:focus-visible {
     var(--rail);
   border-right: 1px solid rgba(255, 255, 255, 0.12);
   flex-direction: column;
-  scrollbar-width: thin;
-  scrollbar-color: var(--rail-muted) transparent;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   transition: width 220ms var(--route-ease);
 }
 
+.sidebar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 .brand-lockup {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 3;
   display: grid;
   min-height: 96px;
   padding: 18px 14px 18px 18px;
+  background: var(--rail);
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   grid-template-columns: 40px minmax(0, 1fr) 40px;
   gap: 10px;
@@ -541,7 +550,7 @@ textarea:focus-visible {
 
 .app-main {
   min-height: 100vh;
-  margin-left: var(--sidebar-width);
+  margin-left: var(--sidebar-offset);
   transition: margin-left 220ms var(--route-ease);
 }
 
@@ -4263,9 +4272,8 @@ textarea:focus-visible {
 }
 
 @media (min-width: 769px) and (max-width: 1320px) {
-  .sidebar-resize-handle,
-  .sidebar-collapse-button {
-    display: none;
+  .app-shell.is-sidebar-compact-viewport:not(.is-sidebar-collapsed) .sidebar {
+    box-shadow: 18px 0 48px rgba(10, 11, 13, 0.34);
   }
 }
 

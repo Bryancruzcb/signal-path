@@ -189,7 +189,10 @@ const storage = {
   timer: 'third-year-lab-timer-v1',
   sidebarWidth: 'signal-path-sidebar-width-v1',
   sidebarCollapsed: 'signal-path-sidebar-collapsed-v1',
+  sidebarMode: 'signal-path-sidebar-mode-v1',
 }
+
+type SidebarMode = 'auto' | 'expanded' | 'collapsed'
 
 const SIDEBAR_DEFAULT_WIDTH = 244
 const SIDEBAR_MIN_WIDTH = 200
@@ -394,9 +397,15 @@ function App() {
     const parsed = Number(stored)
     return stored !== null && Number.isFinite(parsed) ? clampSidebarWidth(parsed) : SIDEBAR_DEFAULT_WIDTH
   })
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    const stored = localStorage.getItem(storage.sidebarCollapsed)
-    return stored === 'true'
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>(() => {
+    const storedMode = localStorage.getItem(storage.sidebarMode)
+    if (storedMode === 'auto' || storedMode === 'expanded' || storedMode === 'collapsed') {
+      return storedMode
+    }
+
+    // The previous release wrote "false" automatically, so only migrate a
+    // deliberate collapsed state. Everyone else starts in responsive auto mode.
+    return localStorage.getItem(storage.sidebarCollapsed) === 'true' ? 'collapsed' : 'auto'
   })
   const [sidebarCompactViewport, setSidebarCompactViewport] = useState(
     () => window.innerWidth > 768 && window.innerWidth <= SIDEBAR_COMPACT_VIEWPORT_MAX
@@ -438,7 +447,7 @@ function App() {
   const profile = pathProfiles.find((item) => item.id === selectedPath) ?? pathProfiles[0]
   const activeRoute = workspaceRoutes.find((route) => route.id === activeView) ?? workspaceRoutes[0]
   const activeRouteIndex = workspaceRoutes.findIndex((route) => route.id === activeView)
-  const sidebarIsCollapsed = sidebarCollapsed || sidebarCompactViewport
+  const sidebarIsCollapsed = sidebarMode === 'collapsed' || (sidebarMode === 'auto' && sidebarCompactViewport)
   const phases = roadmapsByPath[selectedPath]
   const projects = projectsByPath[selectedPath]
   const pathResources = useMemo(() => {
@@ -562,7 +571,7 @@ function App() {
   useEffect(() => localStorage.setItem(storage.knownCourses, JSON.stringify(knownCourses)), [knownCourses])
   useEffect(() => localStorage.setItem(storage.activeCourse, activeCourse), [activeCourse])
   useEffect(() => localStorage.setItem(storage.focusLog, JSON.stringify(focusLog)), [focusLog])
-  useEffect(() => localStorage.setItem(storage.sidebarCollapsed, String(sidebarCollapsed)), [sidebarCollapsed])
+  useEffect(() => localStorage.setItem(storage.sidebarMode, sidebarMode), [sidebarMode])
   useEffect(() => () => sidebarDragCleanupRef.current?.(), [])
 
   // Focus Timer effect: the countdown is derived from a wall-clock deadline so background-tab
@@ -843,7 +852,7 @@ function App() {
   }
 
   function toggleSidebar() {
-    setSidebarCollapsed((collapsed) => !collapsed)
+    setSidebarMode(sidebarIsCollapsed ? 'expanded' : 'collapsed')
   }
 
   function setSidebarExpandedWidth(value: number, persist = false) {
@@ -855,16 +864,16 @@ function App() {
 
   function resizeSidebar(clientX: number) {
     if (clientX <= SIDEBAR_COLLAPSE_THRESHOLD) {
-      setSidebarCollapsed(true)
+      setSidebarMode('collapsed')
       return
     }
 
-    setSidebarCollapsed(false)
+    setSidebarMode('expanded')
     setSidebarExpandedWidth(clientX)
   }
 
   function startSidebarResize(event: ReactPointerEvent<HTMLDivElement>) {
-    if (window.innerWidth <= SIDEBAR_COMPACT_VIEWPORT_MAX) return
+    if (window.innerWidth <= 768) return
     event.preventDefault()
     sidebarDragCleanupRef.current?.()
 
@@ -917,7 +926,7 @@ function App() {
   }
 
   function startSidebarMouseResize(event: ReactMouseEvent<HTMLDivElement>) {
-    if (window.innerWidth <= SIDEBAR_COMPACT_VIEWPORT_MAX || sidebarDragCleanupRef.current !== null) return
+    if (window.innerWidth <= 768 || sidebarDragCleanupRef.current !== null) return
     event.preventDefault()
     setSidebarResizing(true)
     resizeSidebar(event.clientX)
@@ -943,8 +952,8 @@ function App() {
 
     if (event.key === 'ArrowLeft') {
       event.preventDefault()
-      if (sidebarCollapsed || sidebarWidth <= SIDEBAR_MIN_WIDTH + step) {
-        setSidebarCollapsed(true)
+      if (sidebarIsCollapsed || sidebarWidth <= SIDEBAR_MIN_WIDTH + step) {
+        setSidebarMode('collapsed')
       } else {
         setSidebarExpandedWidth(sidebarWidth - step, true)
       }
@@ -953,8 +962,8 @@ function App() {
 
     if (event.key === 'ArrowRight') {
       event.preventDefault()
-      if (sidebarCollapsed) {
-        setSidebarCollapsed(false)
+      if (sidebarIsCollapsed) {
+        setSidebarMode('expanded')
       } else {
         setSidebarExpandedWidth(sidebarWidth + step, true)
       }
@@ -963,13 +972,13 @@ function App() {
 
     if (event.key === 'Home') {
       event.preventDefault()
-      setSidebarCollapsed(true)
+      setSidebarMode('collapsed')
       return
     }
 
     if (event.key === 'End') {
       event.preventDefault()
-      setSidebarCollapsed(false)
+      setSidebarMode('expanded')
       setSidebarExpandedWidth(SIDEBAR_MAX_WIDTH, true)
     }
   }
@@ -1294,6 +1303,7 @@ function App() {
     '--path-soft': profile.soft,
     '--path-deep': profile.deep,
     '--sidebar-width': `${sidebarIsCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth}px`,
+    '--sidebar-offset': `${sidebarCompactViewport ? SIDEBAR_COLLAPSED_WIDTH : sidebarIsCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth}px`,
   } as CSSProperties
 
   // Helper for evidence labels
@@ -1310,7 +1320,7 @@ function App() {
 
   return (
     <div
-      className={`app-shell ${timerRunning ? 'is-focusing' : ''} ${sidebarIsCollapsed ? 'is-sidebar-collapsed' : ''} ${sidebarResizing ? 'is-sidebar-resizing' : ''}`}
+      className={`app-shell ${timerRunning ? 'is-focusing' : ''} ${sidebarIsCollapsed ? 'is-sidebar-collapsed' : ''} ${sidebarCompactViewport ? 'is-sidebar-compact-viewport' : ''} ${sidebarResizing ? 'is-sidebar-resizing' : ''}`}
       style={themeStyle}
       data-view={activeView}
     >

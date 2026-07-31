@@ -107,6 +107,7 @@ textarea:focus-visible {
 }
 
 .app-shell {
+  --sidebar-width: 244px;
   min-height: 100vh;
   background: var(--paper);
   isolation: isolate;
@@ -114,13 +115,14 @@ textarea:focus-visible {
 
 .app-shell::before {
   position: fixed;
-  inset: 0 0 0 286px;
+  inset: 0 0 0 var(--sidebar-width);
   z-index: -1;
   content: "";
   pointer-events: none;
   background:
     linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(23, 25, 29, 0.035) calc(100% - 1px)) 0 0 / 96px 100%,
     linear-gradient(var(--paper-bright), var(--paper));
+  transition: inset 220ms var(--route-ease);
 }
 
 .sidebar {
@@ -128,7 +130,7 @@ textarea:focus-visible {
   inset: 0 auto 0 0;
   z-index: 40;
   display: flex;
-  width: 286px;
+  width: var(--sidebar-width);
   min-height: 100vh;
   overflow: hidden auto;
   color: #f6f4ed;
@@ -139,30 +141,31 @@ textarea:focus-visible {
   flex-direction: column;
   scrollbar-width: thin;
   scrollbar-color: var(--rail-muted) transparent;
+  transition: width 220ms var(--route-ease);
 }
 
 .brand-lockup {
   position: relative;
   display: grid;
-  min-height: 116px;
-  padding: 25px 24px 20px;
+  min-height: 96px;
+  padding: 18px 14px 18px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-  grid-template-columns: 44px 1fr;
-  gap: 14px;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  gap: 10px;
   align-items: center;
 }
 
 .brand-signal {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   color: var(--signal);
   place-items: center;
 }
 
 .brand-signal svg {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   overflow: visible;
 }
 
@@ -196,6 +199,33 @@ textarea:focus-visible {
   text-transform: uppercase;
 }
 
+.sidebar-collapse-button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  color: rgba(255, 255, 255, 0.68);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-xs);
+  place-items: center;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.sidebar-collapse-button svg {
+  transform: rotate(180deg);
+  transition: transform 220ms var(--route-ease);
+}
+
+.sidebar-collapse-button:hover,
+.sidebar-collapse-button:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.42);
+}
+
 .sidebar-mobile-close {
   position: absolute;
   top: 20px;
@@ -211,11 +241,11 @@ textarea:focus-visible {
 
 .sidebar-nav {
   position: relative;
-  padding: 22px 18px 12px;
+  padding: 18px 14px 12px;
 }
 
 .route-rail {
-  --rail-x: 31px;
+  --rail-x: 27px;
 }
 
 .route-rail-line {
@@ -511,7 +541,113 @@ textarea:focus-visible {
 
 .app-main {
   min-height: 100vh;
-  margin-left: 286px;
+  margin-left: var(--sidebar-width);
+  transition: margin-left 220ms var(--route-ease);
+}
+
+.sidebar-resize-handle {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sidebar-width) - 1px);
+  z-index: 45;
+  width: 20px;
+  cursor: col-resize;
+  outline: none;
+  touch-action: none;
+  transition: left 220ms var(--route-ease);
+}
+
+.sidebar-resize-handle::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2px;
+  height: 42px;
+  content: "";
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-50%);
+  transition:
+    height 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.sidebar-resize-handle:hover::before,
+.sidebar-resize-handle:focus-visible::before {
+  height: 64px;
+  background: var(--signal);
+  box-shadow: 0 0 16px rgba(240, 82, 50, 0.55);
+}
+
+.app-shell.is-sidebar-resizing,
+.app-shell.is-sidebar-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+.app-shell.is-sidebar-resizing::before,
+.app-shell.is-sidebar-resizing .sidebar,
+.app-shell.is-sidebar-resizing .app-main,
+.app-shell.is-sidebar-resizing .sidebar-resize-handle {
+  transition: none;
+}
+
+.app-shell.is-sidebar-collapsed .brand-lockup {
+  min-height: 112px;
+  padding: 14px 12px 10px;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 8px;
+}
+
+.app-shell.is-sidebar-collapsed .brand-copy,
+.app-shell.is-sidebar-collapsed .nav-group-label,
+.app-shell.is-sidebar-collapsed .route-station-copy,
+.app-shell.is-sidebar-collapsed .rail-readout-label,
+.app-shell.is-sidebar-collapsed .sidebar-progress,
+.app-shell.is-sidebar-collapsed .sidebar-footer {
+  display: none;
+}
+
+.app-shell.is-sidebar-collapsed .sidebar-collapse-button svg {
+  transform: rotate(0deg);
+}
+
+.app-shell.is-sidebar-collapsed .route-rail {
+  --rail-x: 22px;
+  padding: 14px;
+}
+
+.app-shell.is-sidebar-collapsed .route-station {
+  min-height: 52px;
+  padding: 6px 0 6px 30px;
+  grid-template-columns: 1fr;
+}
+
+.app-shell.is-sidebar-collapsed .route-station-code {
+  font-size: 0.65rem;
+}
+
+.app-shell.is-sidebar-collapsed .rail-readout {
+  padding: 14px 9px;
+}
+
+.app-shell.is-sidebar-collapsed .rail-readout-grid {
+  grid-template-columns: 1fr;
+}
+
+.app-shell.is-sidebar-collapsed .sidebar-meter {
+  display: grid;
+  min-height: 42px;
+  padding: 6px 0;
+  border-right: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.app-shell.is-sidebar-collapsed .sidebar-meter:last-child {
+  border-bottom: 0;
 }
 
 .topbar {
@@ -3968,69 +4104,6 @@ textarea:focus-visible {
 
 /* Responsive routing */
 @media (max-width: 1260px) {
-  .sidebar {
-    width: 96px;
-  }
-
-  .app-main {
-    margin-left: 96px;
-  }
-
-  .app-shell::before {
-    inset: 0 0 0 96px;
-  }
-
-  .brand-lockup {
-    min-height: 92px;
-    padding: 19px 24px;
-    grid-template-columns: 44px;
-  }
-
-  .brand-copy,
-  .nav-group-label,
-  .route-station-copy,
-  .rail-readout-label,
-  .sidebar-progress,
-  .sidebar-footer {
-    display: none;
-  }
-
-  .route-rail {
-    --rail-x: 31px;
-    padding: 18px;
-  }
-
-  .route-station {
-    min-height: 54px;
-    padding: 6px 0 6px 34px;
-    grid-template-columns: 1fr;
-  }
-
-  .route-station-code {
-    font-size: 0.65rem;
-  }
-
-  .rail-readout {
-    padding: 16px 10px;
-  }
-
-  .rail-readout-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar-meter {
-    display: grid;
-    min-height: 42px;
-    padding: 6px 0;
-    border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: center;
-  }
-
-  .sidebar-meter:last-child {
-    border-bottom: 0;
-  }
-
   .routing-hero {
     grid-template-columns: minmax(0, 1fr) minmax(350px, 0.78fr);
   }
@@ -4189,6 +4262,13 @@ textarea:focus-visible {
   }
 }
 
+@media (min-width: 769px) and (max-width: 1320px) {
+  .sidebar-resize-handle,
+  .sidebar-collapse-button {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .app-shell::before {
     inset: 0;
@@ -4205,6 +4285,11 @@ textarea:focus-visible {
       transform 260ms var(--route-ease);
   }
 
+  .sidebar-resize-handle,
+  .sidebar-collapse-button {
+    display: none;
+  }
+
   .sidebar.is-mobile-open {
     visibility: visible;
     pointer-events: auto;
@@ -4216,9 +4301,13 @@ textarea:focus-visible {
     margin-left: 0;
   }
 
-  .brand-lockup {
+  .brand-lockup,
+  .app-shell.is-sidebar-collapsed .brand-lockup {
     min-height: 96px;
+    padding: 18px 56px 18px 18px;
     grid-template-columns: 44px 1fr;
+    justify-items: stretch;
+    gap: 14px;
   }
 
   .brand-copy,
@@ -4226,11 +4315,18 @@ textarea:focus-visible {
   .route-station-copy,
   .rail-readout-label,
   .sidebar-progress,
-  .sidebar-footer {
+  .sidebar-footer,
+  .app-shell.is-sidebar-collapsed .brand-copy,
+  .app-shell.is-sidebar-collapsed .nav-group-label,
+  .app-shell.is-sidebar-collapsed .route-station-copy,
+  .app-shell.is-sidebar-collapsed .rail-readout-label,
+  .app-shell.is-sidebar-collapsed .sidebar-progress,
+  .app-shell.is-sidebar-collapsed .sidebar-footer {
     display: initial;
   }
 
-  .brand-copy {
+  .brand-copy,
+  .app-shell.is-sidebar-collapsed .brand-copy {
     display: grid;
   }
 
@@ -4238,51 +4334,63 @@ textarea:focus-visible {
     display: grid;
   }
 
-  .route-rail {
+  .route-rail,
+  .app-shell.is-sidebar-collapsed .route-rail {
     --rail-x: 31px;
     padding: 18px;
   }
 
-  .nav-group-label {
+  .nav-group-label,
+  .app-shell.is-sidebar-collapsed .nav-group-label {
     display: block;
     margin-left: 43px;
   }
 
-  .route-station {
+  .route-station,
+  .app-shell.is-sidebar-collapsed .route-station {
     min-height: 52px;
     padding: 7px 8px 7px 43px;
     grid-template-columns: 27px 1fr;
   }
 
-  .route-station-copy {
+  .route-station-copy,
+  .app-shell.is-sidebar-collapsed .route-station-copy {
     display: grid;
   }
 
-  .rail-readout {
+  .rail-readout,
+  .app-shell.is-sidebar-collapsed .rail-readout {
     margin-top: 14px;
+    padding: 18px 22px 16px;
   }
 
-  .rail-readout-label {
+  .rail-readout-label,
+  .app-shell.is-sidebar-collapsed .rail-readout-label {
     display: block;
   }
 
-  .rail-readout-grid {
+  .rail-readout-grid,
+  .app-shell.is-sidebar-collapsed .rail-readout-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .sidebar-meter {
+  .sidebar-meter,
+  .app-shell.is-sidebar-collapsed .sidebar-meter {
     min-height: 0;
     padding: 0 8px;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     border-bottom: 0;
+    text-align: left;
   }
 
   .sidebar-progress,
-  .sidebar-footer {
+  .sidebar-footer,
+  .app-shell.is-sidebar-collapsed .sidebar-progress {
     display: block;
   }
 
-  .sidebar-footer {
+  .sidebar-footer,
+  .app-shell.is-sidebar-collapsed .sidebar-footer {
     display: grid;
   }
 
@@ -4746,11 +4854,15 @@ textarea:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-shell::before,
   .view,
   .route-rail-line span,
   .weekly-task-open svg,
   .focus-bench,
   .sidebar,
+  .app-main,
+  .sidebar-resize-handle,
+  .sidebar-collapse-button svg,
   .weekly-guide-drawer,
   .dialog-shell,
   .toast {

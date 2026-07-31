@@ -6,6 +6,9 @@ import {
   type ChangeEvent,
   type CSSProperties,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
 } from 'react'
 import {
   ArrowUpRight,
@@ -184,6 +187,19 @@ const storage = {
   activeCourse: 'third-year-lab-active-course-v1',
   focusLog: 'third-year-lab-focus-log-v1',
   timer: 'third-year-lab-timer-v1',
+  sidebarWidth: 'signal-path-sidebar-width-v1',
+  sidebarCollapsed: 'signal-path-sidebar-collapsed-v1',
+}
+
+const SIDEBAR_DEFAULT_WIDTH = 244
+const SIDEBAR_MIN_WIDTH = 200
+const SIDEBAR_MAX_WIDTH = 340
+const SIDEBAR_COLLAPSED_WIDTH = 84
+const SIDEBAR_COLLAPSE_THRESHOLD = 160
+const SIDEBAR_COMPACT_VIEWPORT_MAX = 1320
+
+function clampSidebarWidth(value: number) {
+  return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, Math.round(value)))
 }
 
 const FALL_2026_FIRST_DAY = '2026-08-19' // SJSU registrar: first day of Fall 2026 instruction
@@ -373,6 +389,19 @@ function App() {
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)
   const [evidenceLegendOpen, setEvidenceLegendOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const stored = localStorage.getItem(storage.sidebarWidth)
+    const parsed = Number(stored)
+    return stored !== null && Number.isFinite(parsed) ? clampSidebarWidth(parsed) : SIDEBAR_DEFAULT_WIDTH
+  })
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const stored = localStorage.getItem(storage.sidebarCollapsed)
+    return stored === 'true'
+  })
+  const [sidebarCompactViewport, setSidebarCompactViewport] = useState(
+    () => window.innerWidth > 768 && window.innerWidth <= SIDEBAR_COMPACT_VIEWPORT_MAX
+  )
+  const [sidebarResizing, setSidebarResizing] = useState(false)
   const [resourceQuery, setResourceQuery] = useState('')
   const [resourceCategory, setResourceCategory] = useState('All')
   const [resourceKind, setResourceKind] = useState('All')
@@ -401,11 +430,15 @@ function App() {
   const weeklyGuideReturnFocusRef = useRef<HTMLButtonElement | null>(null)
   const modalRef = useRef<HTMLDivElement>(null)
   const modalCloseRef = useRef<HTMLButtonElement>(null)
+  const sidebarWidthRef = useRef(sidebarWidth)
+  const sidebarResizePointerRef = useRef<number | null>(null)
+  const sidebarDragCleanupRef = useRef<(() => void) | null>(null)
 
   // --- Derived Values ---
   const profile = pathProfiles.find((item) => item.id === selectedPath) ?? pathProfiles[0]
   const activeRoute = workspaceRoutes.find((route) => route.id === activeView) ?? workspaceRoutes[0]
   const activeRouteIndex = workspaceRoutes.findIndex((route) => route.id === activeView)
+  const sidebarIsCollapsed = sidebarCollapsed || sidebarCompactViewport
   const phases = roadmapsByPath[selectedPath]
   const projects = projectsByPath[selectedPath]
   const pathResources = useMemo(() => {
@@ -529,6 +562,8 @@ function App() {
   useEffect(() => localStorage.setItem(storage.knownCourses, JSON.stringify(knownCourses)), [knownCourses])
   useEffect(() => localStorage.setItem(storage.activeCourse, activeCourse), [activeCourse])
   useEffect(() => localStorage.setItem(storage.focusLog, JSON.stringify(focusLog)), [focusLog])
+  useEffect(() => localStorage.setItem(storage.sidebarCollapsed, String(sidebarCollapsed)), [sidebarCollapsed])
+  useEffect(() => () => sidebarDragCleanupRef.current?.(), [])
 
   // Focus Timer effect: the countdown is derived from a wall-clock deadline so background-tab
   // throttling never stalls it, and a throttled tab snaps back to the true value on return.
@@ -768,7 +803,9 @@ function App() {
 
   useEffect(() => {
     const handleResponsiveNav = () => {
-      if (window.innerWidth > 768) {
+      const viewportWidth = window.innerWidth
+      setSidebarCompactViewport(viewportWidth > 768 && viewportWidth <= SIDEBAR_COMPACT_VIEWPORT_MAX)
+      if (viewportWidth > 768) {
         setMobileNavOpen(false)
         sidebarRef.current?.scrollTo({ top: 0 })
       }
@@ -802,6 +839,138 @@ function App() {
       transitionDocument.startViewTransition(updateRoute)
     } else {
       updateRoute()
+    }
+  }
+
+  function toggleSidebar() {
+    setSidebarCollapsed((collapsed) => !collapsed)
+  }
+
+  function setSidebarExpandedWidth(value: number, persist = false) {
+    const nextWidth = clampSidebarWidth(value)
+    sidebarWidthRef.current = nextWidth
+    setSidebarWidth(nextWidth)
+    if (persist) localStorage.setItem(storage.sidebarWidth, String(nextWidth))
+  }
+
+  function resizeSidebar(clientX: number) {
+    if (clientX <= SIDEBAR_COLLAPSE_THRESHOLD) {
+      setSidebarCollapsed(true)
+      return
+    }
+
+    setSidebarCollapsed(false)
+    setSidebarExpandedWidth(clientX)
+  }
+
+  function startSidebarResize(event: ReactPointerEvent<HTMLDivElement>) {
+    if (window.innerWidth <= SIDEBAR_COMPACT_VIEWPORT_MAX) return
+    event.preventDefault()
+    sidebarDragCleanupRef.current?.()
+
+    const pointerId = event.pointerId
+    const handle = event.currentTarget
+    sidebarResizePointerRef.current = pointerId
+    handle.setPointerCapture(pointerId)
+    setSidebarResizing(true)
+    resizeSidebar(event.clientX)
+
+    let sawPointerMove = false
+    let cleanedUp = false
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) return
+      sawPointerMove = true
+      resizeSidebar(moveEvent.clientX)
+    }
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!sawPointerMove) resizeSidebar(moveEvent.clientX)
+    }
+    const cleanup = () => {
+      if (cleanedUp) return
+      cleanedUp = true
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', finishPointer)
+      window.removeEventListener('pointercancel', finishPointer)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', finishMouse)
+      window.removeEventListener('blur', cleanup)
+      handle.removeEventListener('lostpointercapture', cleanup)
+      if (handle.hasPointerCapture(pointerId)) handle.releasePointerCapture(pointerId)
+      localStorage.setItem(storage.sidebarWidth, String(sidebarWidthRef.current))
+      sidebarResizePointerRef.current = null
+      sidebarDragCleanupRef.current = null
+      setSidebarResizing(false)
+    }
+    const finishPointer = (finishEvent: PointerEvent) => {
+      if (finishEvent.pointerId === pointerId) cleanup()
+    }
+    const finishMouse = () => cleanup()
+
+    sidebarDragCleanupRef.current = cleanup
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', finishPointer)
+    window.addEventListener('pointercancel', finishPointer)
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', finishMouse)
+    window.addEventListener('blur', cleanup)
+    handle.addEventListener('lostpointercapture', cleanup)
+  }
+
+  function startSidebarMouseResize(event: ReactMouseEvent<HTMLDivElement>) {
+    if (window.innerWidth <= SIDEBAR_COMPACT_VIEWPORT_MAX || sidebarDragCleanupRef.current !== null) return
+    event.preventDefault()
+    setSidebarResizing(true)
+    resizeSidebar(event.clientX)
+
+    const handleMove = (moveEvent: MouseEvent) => resizeSidebar(moveEvent.clientX)
+    const finish = () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', finish)
+      window.removeEventListener('blur', finish)
+      localStorage.setItem(storage.sidebarWidth, String(sidebarWidthRef.current))
+      sidebarDragCleanupRef.current = null
+      setSidebarResizing(false)
+    }
+
+    sidebarDragCleanupRef.current = finish
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', finish)
+    window.addEventListener('blur', finish)
+  }
+
+  function resizeSidebarWithKeyboard(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const step = event.shiftKey ? 24 : 8
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      if (sidebarCollapsed || sidebarWidth <= SIDEBAR_MIN_WIDTH + step) {
+        setSidebarCollapsed(true)
+      } else {
+        setSidebarExpandedWidth(sidebarWidth - step, true)
+      }
+      return
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      if (sidebarCollapsed) {
+        setSidebarCollapsed(false)
+      } else {
+        setSidebarExpandedWidth(sidebarWidth + step, true)
+      }
+      return
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault()
+      setSidebarCollapsed(true)
+      return
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault()
+      setSidebarCollapsed(false)
+      setSidebarExpandedWidth(SIDEBAR_MAX_WIDTH, true)
     }
   }
 
@@ -1124,6 +1293,7 @@ function App() {
     '--path-accent': profile.accent,
     '--path-soft': profile.soft,
     '--path-deep': profile.deep,
+    '--sidebar-width': `${sidebarIsCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth}px`,
   } as CSSProperties
 
   // Helper for evidence labels
@@ -1140,7 +1310,7 @@ function App() {
 
   return (
     <div
-      className={`app-shell ${timerRunning ? 'is-focusing' : ''}`}
+      className={`app-shell ${timerRunning ? 'is-focusing' : ''} ${sidebarIsCollapsed ? 'is-sidebar-collapsed' : ''} ${sidebarResizing ? 'is-sidebar-resizing' : ''}`}
       style={themeStyle}
       data-view={activeView}
     >
@@ -1165,6 +1335,17 @@ function App() {
             <strong>Signal Path</strong>
             <span>Study &amp; career planner</span>
           </div>
+          <button
+            className="sidebar-collapse-button"
+            type="button"
+            aria-label={sidebarIsCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+            aria-controls="primary-sidebar"
+            aria-expanded={!sidebarIsCollapsed}
+            title={sidebarIsCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+            onClick={toggleSidebar}
+          >
+            <ChevronRight size={17} aria-hidden="true" />
+          </button>
           <button
             ref={mobileNavCloseRef}
             className="sidebar-mobile-close"
@@ -1195,7 +1376,8 @@ function App() {
                   className={`nav-item route-station ${isActive ? 'is-active' : ''} ${isPassed ? 'is-passed' : ''}`}
                   type="button"
                   aria-current={isActive ? 'page' : undefined}
-                  aria-label={route.label}
+                  aria-label={`Step ${index + 1} of ${workspaceRoutes.length}: ${route.label}${isActive ? ', current step' : ''}`}
+                  title={sidebarIsCollapsed ? `${route.code} · ${route.label}` : undefined}
                   onClick={() => navigate(route.id)}
                 >
                   <span className="route-station-node" aria-hidden="true">
@@ -1276,6 +1458,23 @@ function App() {
           </button>
         </div>
       </aside>
+
+      <div
+        className="sidebar-resize-handle"
+        role="separator"
+        aria-label="Resize navigation"
+        aria-controls="primary-sidebar"
+        aria-orientation="vertical"
+        aria-valuemin={sidebarIsCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_MIN_WIDTH}
+        aria-valuemax={SIDEBAR_MAX_WIDTH}
+        aria-valuenow={sidebarIsCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth}
+        aria-valuetext={sidebarIsCollapsed ? 'Navigation collapsed' : `Navigation width ${sidebarWidth} pixels`}
+        tabIndex={0}
+        title="Drag to resize navigation"
+        onPointerDown={startSidebarResize}
+        onMouseDown={startSidebarMouseResize}
+        onKeyDown={resizeSidebarWithKeyboard}
+      />
 
       <button
         className={`mobile-nav-backdrop ${mobileNavOpen ? 'is-visible' : ''}`}

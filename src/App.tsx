@@ -59,6 +59,7 @@ import {
   ELECTIVES,
   GITHUB_STUDENT_PACK,
   SOURCES,
+  type GuideDevice,
 } from './data/sjsuData'
 import { resources as roadmapResources } from './data/roadmap'
 import './App.css'
@@ -190,7 +191,18 @@ const storage = {
   sidebarWidth: 'signal-path-sidebar-width-v1',
   sidebarCollapsed: 'signal-path-sidebar-collapsed-v1',
   sidebarMode: 'signal-path-sidebar-mode-v1',
+  guideDevice: 'signal-path-guide-device-v1',
 }
+
+const guideDeviceOptions: Array<{
+  id: GuideDevice
+  code: string
+  label: string
+  detail: string
+}> = [
+  { id: 'windows', code: 'WIN', label: 'Windows PC', detail: 'Windows' },
+  { id: 'macos', code: 'MAC', label: 'iMac', detail: 'macOS' },
+]
 
 type SidebarMode = 'auto' | 'expanded' | 'collapsed'
 
@@ -336,6 +348,137 @@ function ViewIntro({
   )
 }
 
+function isGuideDevice(value: string | null | undefined): value is GuideDevice {
+  return value === 'windows' || value === 'macos'
+}
+
+function getInitialGuideDevice(): GuideDevice {
+  const storedDevice = localStorage.getItem(storage.guideDevice)
+  if (isGuideDevice(storedDevice)) return storedDevice
+  return /Mac|iPhone|iPad/i.test(navigator.userAgent) ? 'macos' : 'windows'
+}
+
+type DeviceGuideSummary = {
+  label: string
+  environment: string
+}
+
+function DeviceGuidePicker({
+  device,
+  guide,
+  name,
+  subject,
+  onChange,
+}: {
+  device: GuideDevice
+  guide: DeviceGuideSummary
+  name: string
+  subject: string
+  onChange: (device: GuideDevice) => void
+}) {
+  function handleKeyDown(
+    event: ReactKeyboardEvent<HTMLInputElement>,
+    currentDevice: GuideDevice
+  ) {
+    const currentIndex = guideDeviceOptions.findIndex((option) => option.id === currentDevice)
+    let nextIndex = currentIndex
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextIndex = (currentIndex + 1) % guideDeviceOptions.length
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextIndex = (currentIndex - 1 + guideDeviceOptions.length) % guideDeviceOptions.length
+    } else if (event.key === 'Home') {
+      nextIndex = 0
+    } else if (event.key === 'End') {
+      nextIndex = guideDeviceOptions.length - 1
+    } else {
+      return
+    }
+
+    event.preventDefault()
+    const nextDevice = guideDeviceOptions[nextIndex].id
+    const group = event.currentTarget.closest('[data-device-guide-options]')
+    onChange(nextDevice)
+    window.requestAnimationFrame(() => {
+      group?.querySelector<HTMLInputElement>(`input[value="${nextDevice}"]`)?.focus()
+    })
+  }
+
+  return (
+    <>
+      <p className="sr-only" aria-live="polite">
+        Showing {guide.label} steps for {subject}.
+      </p>
+      <fieldset className="device-guide-picker">
+        <legend>Show steps for</legend>
+        <div className="device-guide-profile">
+          <div>
+            <p className="mono-label">MY DEVICES</p>
+            <p>Switch computers anytime. Your progress stays the same.</p>
+          </div>
+          <span className="device-guide-devices-saved">
+            <i aria-hidden="true" /> Both saved
+          </span>
+        </div>
+        <div className="device-guide-options" data-device-guide-options>
+          {guideDeviceOptions.map((option) => (
+            <label className="device-guide-option" key={option.id}>
+              <input
+                type="radio"
+                name={name}
+                value={option.id}
+                checked={device === option.id}
+                onChange={() => onChange(option.id)}
+                onKeyDown={(event) => handleKeyDown(event, option.id)}
+              />
+              <span className="device-guide-option-surface">
+                <span className="device-guide-code">{option.code}</span>
+                <span>
+                  <strong>{option.label}</strong>
+                  <small>{option.detail}</small>
+                </span>
+                <Check className="device-guide-check" size={16} aria-hidden="true" />
+              </span>
+            </label>
+          ))}
+        </div>
+        <div className="device-guide-environment">
+          <span>{guide.label}</span>
+          <p>{guide.environment}</p>
+        </div>
+      </fieldset>
+    </>
+  )
+}
+
+function DeviceQuickSwitch({
+  device,
+  onChange,
+}: {
+  device: GuideDevice
+  onChange: (device: GuideDevice) => void
+}) {
+  return (
+    <fieldset className="topbar-device-switch">
+      <legend className="sr-only">Show instructions for</legend>
+      <span className="topbar-device-label" aria-hidden="true">Steps</span>
+      {guideDeviceOptions.map((option) => (
+        <label key={option.id} title={`Show ${option.label} instructions`}>
+          <input
+            type="radio"
+            name="global-guide-device"
+            value={option.id}
+            checked={device === option.id}
+            onChange={() => onChange(option.id)}
+          />
+          <span aria-hidden="true">{option.code}</span>
+          <span className="sr-only">{option.label}</span>
+        </label>
+      ))}
+    </fieldset>
+  )
+}
+
 function App() {
   // --- States ---
   const [selectedPath, setSelectedPath] = useState<PathId>(getInitialPath)
@@ -360,6 +503,7 @@ function App() {
   const [weeklyTasksCompleted, setWeeklyTasksCompleted] = useState<Record<string, boolean>>(() =>
     readObject<Record<string, boolean>>(storage.weekly, {})
   )
+  const [guideDevice, setGuideDevice] = useState<GuideDevice>(getInitialGuideDevice)
   const [modulesCompleted, setModulesCompleted] = useState<Record<string, boolean>>(() =>
     readObject<Record<string, boolean>>(storage.modules, {})
   )
@@ -447,6 +591,8 @@ function App() {
   const profile = pathProfiles.find((item) => item.id === selectedPath) ?? pathProfiles[0]
   const activeRoute = workspaceRoutes.find((route) => route.id === activeView) ?? workspaceRoutes[0]
   const activeRouteIndex = workspaceRoutes.findIndex((route) => route.id === activeView)
+  const activeGuideDeviceOption =
+    guideDeviceOptions.find((option) => option.id === guideDevice) ?? guideDeviceOptions[0]
   const sidebarIsCollapsed = sidebarMode === 'collapsed' || (sidebarMode === 'auto' && sidebarCompactViewport)
   const phases = roadmapsByPath[selectedPath]
   const projects = projectsByPath[selectedPath]
@@ -478,6 +624,7 @@ function App() {
         url: res.url,
         why: res.why,
         action: res.action,
+        deviceNotes: undefined,
         kind: res.category === 'Community' ? 'Community' : 'Reference',
         evidence: res.evidence,
         verified: 'July 2026',
@@ -572,6 +719,7 @@ function App() {
   useEffect(() => localStorage.setItem(storage.activeCourse, activeCourse), [activeCourse])
   useEffect(() => localStorage.setItem(storage.focusLog, JSON.stringify(focusLog)), [focusLog])
   useEffect(() => localStorage.setItem(storage.sidebarMode, sidebarMode), [sidebarMode])
+  useEffect(() => localStorage.setItem(storage.guideDevice, guideDevice), [guideDevice])
   useEffect(() => () => sidebarDragCleanupRef.current?.(), [])
 
   // Focus Timer effect: the countdown is derived from a wall-clock deadline so background-tab
@@ -1014,6 +1162,13 @@ function App() {
     setOpenWeeklyTaskId(null)
   }
 
+  function selectGuideDevice(device: GuideDevice) {
+    if (device === guideDevice) return
+    setGuideDevice(device)
+    const label = guideDeviceOptions.find((option) => option.id === device)?.label ?? device
+    setToast(`${label} steps selected. This choice is saved.`)
+  }
+
   async function copyWeeklyPrompt(prompt: string, successMessage = "ChatGPT prompt copied.") {
     try {
       if (!navigator.clipboard) throw new Error("Clipboard API unavailable")
@@ -1089,6 +1244,7 @@ function App() {
       completedMilestones,
       applications,
       weeklyTasksCompleted,
+      guideDevice,
       modulesCompleted,
       knownCourses,
       focusLog,
@@ -1127,6 +1283,7 @@ function App() {
       'completedMilestones',
       'applications',
       'weeklyTasksCompleted',
+      'guideDevice',
       'modulesCompleted',
       'knownCourses',
       'focusLog',
@@ -1186,6 +1343,10 @@ function App() {
     if (isPlainObject(parsed.weeklyTasksCompleted)) {
       setWeeklyTasksCompleted(toBooleanRecord(parsed.weeklyTasksCompleted))
       restored.push('weekly tasks')
+    }
+    if (typeof parsed.guideDevice === 'string' && isGuideDevice(parsed.guideDevice)) {
+      setGuideDevice(parsed.guideDevice)
+      restored.push('guide device')
     }
     if (isPlainObject(parsed.modulesCompleted)) {
       setModulesCompleted(toBooleanRecord(parsed.modulesCompleted))
@@ -1293,10 +1454,32 @@ function App() {
 
   // Details for selected module dialog
   const activeWeeklyTask = WEEKLY_TASKS.find((task) => task.id === openWeeklyTaskId)
+  const activeWeeklyDeviceGuide = activeWeeklyTask?.deviceGuides[guideDevice]
+  const activeWeeklySteps = activeWeeklyTask?.steps.map((step) => ({
+    ...step,
+    ...step.device?.[guideDevice],
+  })) ?? []
+  const activeWeeklyResources = activeWeeklyTask
+    ? [...(activeWeeklyDeviceGuide?.resources ?? []), ...activeWeeklyTask.resources]
+    : []
+  const activeWeeklyPrompt = activeWeeklyDeviceGuide?.chatGptPrompt ?? activeWeeklyTask?.chatGptPrompt ?? ''
   const activeModule = allSjsuModules.find((m) => m.id === openModuleId)
   const activeModuleCourse = openModuleId
     ? Object.entries(COURSES).find(([_, c]) => c.modules.some((m) => m.id === openModuleId))?.[1]
     : null
+  const activeModuleDeviceGuide = activeModuleCourse?.deviceGuides[guideDevice]
+  const activeModuleSteps = activeModule?.steps.map((step) => {
+    if (typeof step === 'string') return { title: step }
+    return {
+      ...step,
+      ...step.device?.[guideDevice],
+    }
+  }) ?? []
+  const activeModuleResources = activeModule
+    ? [...(activeModuleDeviceGuide?.resources ?? []), ...activeModule.resources].filter(
+        (resource, index, all) => all.findIndex((item) => item.url === resource.url) === index
+      )
+    : []
 
   const themeStyle = {
     '--path-accent': profile.accent,
@@ -1521,6 +1704,7 @@ function App() {
           </div>
 
           <div className="topbar-actions">
+            <DeviceQuickSwitch device={guideDevice} onChange={selectGuideDevice} />
             <span className="topbar-save-state">
               <i aria-hidden="true"></i>
               Saved on this device
@@ -1950,7 +2134,11 @@ function App() {
                             <button
                               className={`button ${course.tone === 'network' ? 'button-network' : 'button-secondary'}`}
                               type="button"
-                              onClick={() => setOpenModuleId(module.id)}
+                              data-testid={`open-module-${module.id}`}
+                              onClick={() => {
+                                setOpenModuleId(module.id)
+                                setToast(`${module.title} lab opened.`)
+                              }}
                             >
                               Open lab
                             </button>
@@ -2394,6 +2582,12 @@ function App() {
                                 </div>
                                 <h3 style={{ fontSize: '1.05rem', margin: '4px 0 0', fontWeight: '600' }}>{task.title}</h3>
                                 <p style={{ margin: '4px 0 0', fontSize: '0.92rem', color: 'var(--ink-soft)' }}>{task.detail}</p>
+                                {task.deviceNotes?.[guideDevice] && (
+                                  <div className="career-device-note">
+                                    <span>{activeGuideDeviceOption.code}</span>
+                                    <p>{task.deviceNotes[guideDevice]}</p>
+                                  </div>
+                                )}
                                 <div className="task-output" style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '10px', fontSize: '0.84rem', color: 'var(--muted)' }}>
                                   <FileCheck2 size={14} />
                                   <span>Output:</span>
@@ -2454,6 +2648,13 @@ function App() {
                           <p style={{ margin: '4px 0 0', fontSize: '0.94rem', fontWeight: '600', color: 'var(--ink)' }}>{project.decision}</p>
                         </div>
                       </div>
+
+                      {project.deviceNote && (
+                        <div className="career-device-note is-both-devices">
+                          <span>BOTH</span>
+                          <p>{project.deviceNote}</p>
+                        </div>
+                      )}
 
                       <div className="project-body-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                         <div>
@@ -2580,6 +2781,12 @@ function App() {
                       <Target size={14} style={{ color: 'var(--path-accent)', flexShrink: '0', marginTop: '2px' }} />
                       <p style={{ margin: '0' }}><strong>Do this:</strong> {res.action}</p>
                     </div>
+                    {res.deviceNotes?.[guideDevice] && (
+                      <div className="career-device-note">
+                        <span>{activeGuideDeviceOption.code}</span>
+                        <p>{res.deviceNotes[guideDevice]}</p>
+                      </div>
+                    )}
                     <div className="resource-progress" style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}>
                         <span>Progress</span>
@@ -3013,6 +3220,16 @@ function App() {
                   ? `${activeWeeklyTask.title} is marked complete.`
                   : `${activeWeeklyTask.title} is still in progress.`}
               </p>
+              {activeWeeklyDeviceGuide && (
+                <DeviceGuidePicker
+                  device={guideDevice}
+                  guide={activeWeeklyDeviceGuide}
+                  name="weekly-guide-device"
+                  subject={activeWeeklyTask.title}
+                  onChange={selectGuideDevice}
+                />
+              )}
+
               <section className="weekly-guide-section">
                 <h3>Why this matters</h3>
                 <p className="weekly-guide-why">{activeWeeklyTask.why}</p>
@@ -3023,10 +3240,10 @@ function App() {
               </section>
 
               <section className="weekly-guide-section">
-                <h3>Run the lab</h3>
+                <h3>Run the lab on {activeWeeklyDeviceGuide?.label}</h3>
                 <ol className="weekly-guide-steps">
-                  {activeWeeklyTask.steps.map((step, index) => (
-                    <li key={step.title}>
+                  {activeWeeklySteps.map((step, index) => (
+                    <li key={`${activeWeeklyTask.id}-${index}`}>
                       <span className="weekly-guide-step-number" aria-hidden="true">
                         {index + 1}
                       </span>
@@ -3047,7 +3264,7 @@ function App() {
               <section className="weekly-guide-section">
                 <h3>Study resources</h3>
                 <div className="weekly-guide-resources">
-                  {activeWeeklyTask.resources.map((resource) => (
+                  {activeWeeklyResources.map((resource) => (
                     <a
                       className={`weekly-guide-resource is-${resource.kind}`}
                       href={resource.url}
@@ -3075,19 +3292,19 @@ function App() {
                   <BrainCircuit size={22} aria-hidden="true" />
                   <h3>Ask ChatGPT</h3>
                 </div>
-                <p>{activeWeeklyTask.chatGptPrompt}</p>
+                <p>{activeWeeklyPrompt}</p>
                 <div className="weekly-guide-chat-actions">
                   <button
                     className="button button-secondary"
                     type="button"
-                    onClick={() => void copyWeeklyPrompt(activeWeeklyTask.chatGptPrompt)}
+                    onClick={() => void copyWeeklyPrompt(activeWeeklyPrompt)}
                   >
                     <Copy size={15} /> Copy prompt
                   </button>
                   <button
                     className="button weekly-guide-chat-open"
                     type="button"
-                    onClick={() => openChatGpt(activeWeeklyTask.chatGptPrompt)}
+                    onClick={() => openChatGpt(activeWeeklyPrompt)}
                   >
                     Open ChatGPT <ExternalLink size={15} />
                   </button>
@@ -3119,40 +3336,63 @@ function App() {
 
       {/* --- DIALOG MODALS --- */}
       {/* 1. Module Dialog Details */}
-      {activeModule && activeModuleCourse && (
-        <div className="dialog-overlay" style={{ position: 'fixed', inset: '0', zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'grid', placeItems: 'center', padding: '20px' }} onClick={() => setOpenModuleId(null)}>
-          <div ref={modalRef} className="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="module-dialog-title" style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', padding: '28px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
-            <header className="dialog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
+      {activeModule && activeModuleCourse && activeModuleDeviceGuide && (
+        <div className="dialog-overlay" onClick={() => setOpenModuleId(null)}>
+          <div ref={modalRef} className="dialog-shell module-dialog-shell" role="dialog" aria-modal="true" aria-labelledby="module-dialog-title" onClick={(e) => e.stopPropagation()}>
+            <header className="dialog-header">
               <div>
-                <span className="mono-label" style={{ color: 'var(--path-accent)' }}>{activeModuleCourse.code} · {activeModuleCourse.title}</span>
-                <h2 id="module-dialog-title" style={{ fontSize: '1.4rem', margin: '4px 0 0', fontWeight: '600' }}>{activeModule.title}</h2>
+                <span className="mono-label">{activeModuleCourse.code} · {activeModuleCourse.title}</span>
+                <h2 id="module-dialog-title">{activeModule.title}</h2>
               </div>
-              <button ref={modalCloseRef} className="icon-button" type="button" aria-label="Close module" onClick={() => setOpenModuleId(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
+              <button ref={modalCloseRef} className="icon-button" type="button" aria-label="Close module" onClick={() => setOpenModuleId(null)}>
                 <X size={20} />
               </button>
             </header>
             <div className="dialog-body">
-              <p className="dialog-intro" style={{ fontSize: '1.02rem', lineHeight: '1.6', color: 'var(--ink)' }}>{activeModule.why}</p>
-              
-              <section className="dialog-section" style={{ marginTop: '20px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px' }}>What you will make</h3>
-                <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
+              <DeviceGuidePicker
+                device={guideDevice}
+                guide={activeModuleDeviceGuide}
+                name="module-guide-device"
+                subject={activeModule.title}
+                onChange={selectGuideDevice}
+              />
+
+              <p className="dialog-intro">{activeModule.why}</p>
+
+              <section className="dialog-section">
+                <h3>What you will make</h3>
+                <p>
                   <strong>{activeModule.deliverable}</strong> · expected time {activeModule.duration}.
                 </p>
               </section>
 
-              <section className="dialog-section" style={{ marginTop: '20px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px' }}>Run the lab</h3>
-                <ol className="lab-steps" style={{ paddingLeft: '20px', margin: '0', display: 'grid', gap: '8px', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
-                  {activeModule.steps.map((step) => <li key={step}>{step}</li>)}
+              <section className="dialog-section">
+                <h3>Run the lab on {activeModuleDeviceGuide.label}</h3>
+                <ol className="weekly-guide-steps module-guide-steps">
+                  {activeModuleSteps.map((step, index) => (
+                    <li key={`${activeModule.id}-${index}`}>
+                      <span className="weekly-guide-step-number" aria-hidden="true">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <strong>{step.title}</strong>
+                        {step.detail && <p>{step.detail}</p>}
+                        {step.code && (
+                          <pre>
+                            <code>{step.code}</code>
+                          </pre>
+                        )}
+                      </div>
+                    </li>
+                  ))}
                 </ol>
               </section>
 
-              <section className="dialog-section" style={{ marginTop: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '20px', marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px' }}>Primary resources</h3>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  {activeModule.resources.map((res) => (
-                    <a className="resource-link button button-secondary" href={res.url} target="_blank" rel="noreferrer" key={res.label} style={{ fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <section className="dialog-section module-guide-resources">
+                <h3>Primary resources</h3>
+                <div>
+                  {activeModuleResources.map((res) => (
+                    <a className="resource-link button button-secondary" href={res.url} target="_blank" rel="noreferrer" key={res.url}>
                       <span>{res.label}</span>
                       <ArrowUpRight size={14} />
                     </a>
@@ -3160,7 +3400,7 @@ function App() {
                 </div>
               </section>
 
-              <div className="dialog-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <div className="dialog-actions">
                 <button className="button button-secondary" type="button" onClick={() => setOpenModuleId(null)}>
                   Close
                 </button>

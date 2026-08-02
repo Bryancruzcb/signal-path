@@ -1,7 +1,13 @@
-export type WeeklyTaskStep = {
+export type GuideDevice = 'windows' | 'macos'
+
+export type WeeklyTaskStepContent = {
   title: string
   detail: string
   code?: string
+}
+
+export type WeeklyTaskStep = WeeklyTaskStepContent & {
+  device?: Partial<Record<GuideDevice, Partial<WeeklyTaskStepContent>>>
 }
 
 export type WeeklyTaskResource = {
@@ -9,6 +15,13 @@ export type WeeklyTaskResource = {
   label: string
   meta: string
   url: string
+}
+
+export type WeeklyTaskDeviceGuide = {
+  label: string
+  environment: string
+  resources?: WeeklyTaskResource[]
+  chatGptPrompt?: string
 }
 
 export type WeeklyTask = {
@@ -21,6 +34,25 @@ export type WeeklyTask = {
   steps: WeeklyTaskStep[]
   resources: WeeklyTaskResource[]
   chatGptPrompt: string
+  deviceGuides: Record<GuideDevice, WeeklyTaskDeviceGuide>
+}
+
+export type CourseModuleStepContent = {
+  title: string
+  detail?: string
+  code?: string
+}
+
+export type CourseModuleStructuredStep = CourseModuleStepContent & {
+  device?: Partial<Record<GuideDevice, Partial<CourseModuleStepContent>>>
+}
+
+export type CourseModuleStep = string | CourseModuleStructuredStep
+
+export type CourseDeviceGuide = {
+  label: string
+  environment: string
+  resources?: Array<{ label: string; url: string }>
 }
 
 export type CourseModule = {
@@ -30,7 +62,7 @@ export type CourseModule = {
   duration: string
   deliverable: string
   why: string
-  steps: string[]
+  steps: CourseModuleStep[]
   resources: Array<{ label: string; url: string }>
 }
 
@@ -47,6 +79,7 @@ export type CourseInfo = {
   assessmentNote: string
   story: string
   evidenceNote: string
+  deviceGuides: Record<GuideDevice, CourseDeviceGuide>
   modules: CourseModule[]
 }
 
@@ -110,11 +143,79 @@ export const WEEKLY_TASKS: WeeklyTask[] = [
       "Current CS 149 material expects you to work in C from a Linux terminal. A dependable compiler-and-shell setup removes friction before the operating-systems ideas get difficult.",
     deliverable:
       "A hello.c program that compiles with strict warnings, runs successfully, and leaves you with a saved command log.",
+    deviceGuides: {
+      windows: {
+        label: "Windows PC",
+        environment:
+          "Use Ubuntu through WSL 2. Run the setup commands in PowerShell, then do the lab inside Ubuntu.",
+        resources: [
+          {
+            kind: "read",
+            label: "Install WSL",
+            meta: "Official Microsoft setup guide",
+            url: "https://learn.microsoft.com/en-us/windows/wsl/install",
+          },
+        ],
+        chatGptPrompt:
+          "I use a Windows PC and I am preparing for SJSU CS 149. Help me check that Ubuntu is running through WSL 2, then explain what happens when I run `gcc -std=c17 -Wall -Wextra -Wpedantic hello.c -o hello`, what each flag does, and how the shell finds and runs `./hello`. Then quiz me with three short terminal questions. Do not assume I already understand compilation, linking, executables, WSL, or exit codes.",
+      },
+      macos: {
+        label: "iMac / macOS",
+        environment:
+          "Use an Ubuntu virtual machine through Multipass. Run Multipass in macOS Terminal, then do the lab inside Ubuntu.",
+        resources: [
+          {
+            kind: "read",
+            label: "Install Multipass",
+            meta: "Official Ubuntu setup guide",
+            url: "https://documentation.ubuntu.com/multipass/latest/how-to-guides/install-multipass/",
+          },
+        ],
+        chatGptPrompt:
+          "I use an iMac and I am preparing for SJSU CS 149. Help me check that my Multipass Ubuntu virtual machine is ready, then explain what happens when I run `gcc -std=c17 -Wall -Wextra -Wpedantic hello.c -o hello`, what each flag does, and how the shell finds and runs `./hello`. Then quiz me with three short terminal questions. Do not assume I already understand virtual machines, compilation, linking, executables, or exit codes.",
+      },
+    },
     steps: [
+      {
+        title: "Set up Ubuntu for this device",
+        detail: "Choose your device above to see the right setup.",
+        device: {
+          windows: {
+            title: "Install WSL 2 and Ubuntu",
+            detail:
+              "Open PowerShell as Administrator, run this once, then restart Windows if asked.",
+            code: "wsl --install",
+          },
+          macos: {
+            title: "Install Multipass on your iMac",
+            detail:
+              "Use the official Multipass installer under Study resources, finish setup, then confirm it works in Terminal.",
+            code: "multipass version",
+          },
+        },
+      },
+      {
+        title: "Open Ubuntu",
+        detail: "Start the Ubuntu environment for your device.",
+        device: {
+          windows: {
+            title: "Finish Ubuntu setup",
+            detail:
+              "After restarting, open Ubuntu once and create the Linux username and password it asks for. Then use PowerShell: the first line checks WSL 2 and the second opens your Linux home folder.",
+            code: "wsl --list --verbose\nwsl ~",
+          },
+          macos: {
+            title: "Create and open your Ubuntu VM",
+            detail:
+              "Run the first line only the first time. After that, use the second line whenever you return.",
+            code: "multipass launch --name signal-path\nmultipass shell signal-path",
+          },
+        },
+      },
       {
         title: "Confirm that you are in Linux",
         detail:
-          "Open Ubuntu natively, through WSL 2 on Windows, or in a Linux virtual machine on macOS. The commands below assume an Ubuntu-style environment.",
+          "Run this inside Ubuntu. The output should say Linux, not Windows or Darwin.",
         code: "uname -a",
       },
       {
@@ -168,7 +269,35 @@ export const WEEKLY_TASKS: WeeklyTask[] = [
       "Processes and system calls appear early in operating-systems courses. Predicting the parent/child relationship before execution builds the mental model needed for scheduling, pipes, and signals.",
     deliverable:
       "A hand-drawn process tree plus a warning-clean C program whose observed PIDs and exit status match your corrected prediction.",
+    deviceGuides: {
+      windows: {
+        label: "Windows PC",
+        environment:
+          "Run this lab inside Ubuntu through WSL 2. Native Windows does not use the same fork, exec, and wait system calls.",
+      },
+      macos: {
+        label: "iMac / macOS",
+        environment:
+          "Run this lab inside your Multipass Ubuntu VM so the behavior matches the Linux environment used in class.",
+      },
+    },
     steps: [
+      {
+        title: "Open your Linux workbench",
+        detail: "Start the Ubuntu environment you set up in the first task.",
+        device: {
+          windows: {
+            title: "Open Ubuntu on Windows",
+            detail: "Run this in PowerShell, then keep the rest of the lab inside Ubuntu.",
+            code: "wsl ~",
+          },
+          macos: {
+            title: "Open Ubuntu on your iMac",
+            detail: "Run this in macOS Terminal, then keep the rest of the lab inside the VM.",
+            code: "multipass shell signal-path",
+          },
+        },
+      },
       {
         title: "Draw the expected tree first",
         detail:
@@ -219,18 +348,50 @@ export const WEEKLY_TASKS: WeeklyTask[] = [
       "DNS is an application-layer protocol you can observe directly. Capturing one lookup connects names, IP addresses, UDP ports, request IDs, and latency in a single piece of evidence.",
     deliverable:
       "One annotated Wireshark screenshot showing a DNS query and its matching response, including names, addresses, ports, records, and elapsed time.",
+    deviceGuides: {
+      windows: {
+        label: "Windows PC",
+        environment:
+          "Use Wireshark on Windows. Capture the active Wi-Fi or Ethernet connection and run the lookup in PowerShell.",
+      },
+      macos: {
+        label: "iMac / macOS",
+        environment:
+          "Use Wireshark on macOS. Capture the active Wi-Fi or Ethernet connection and run the lookup in Terminal.",
+      },
+    },
     steps: [
       {
         title: "Start a focused capture",
         detail:
           "Open Wireshark, choose the interface carrying your traffic, begin capturing, and use the display filter below to hide unrelated packets.",
         code: "dns",
+        device: {
+          windows: {
+            detail:
+              "Open Wireshark on Windows, choose the active Wi-Fi or Ethernet connection, start the capture, and enter this display filter.",
+          },
+          macos: {
+            detail:
+              "Open Wireshark on your iMac, choose the active Wi-Fi or Ethernet connection, allow capture access if macOS asks, and enter this display filter.",
+          },
+        },
       },
       {
         title: "Generate one lookup",
         detail:
           "Run the command while the capture is active. If the answer is cached, try a different hostname.",
         code: "nslookup example.com",
+        device: {
+          windows: {
+            detail:
+              "Run this in PowerShell while the capture is active. If the answer is cached, try a different hostname.",
+          },
+          macos: {
+            detail:
+              "Run this in Terminal while the capture is active. If the answer is cached, try a different hostname.",
+          },
+        },
       },
       {
         title: "Match query to response",
@@ -274,7 +435,37 @@ export const WEEKLY_TASKS: WeeklyTask[] = [
       "A localhost echo pair exposes the smallest useful TCP lifecycle: bind, listen, accept, connect, send bytes, receive bytes, and close cleanly.",
     deliverable:
       "A server.py and client.py pair that echoes a byte message on localhost and exits cleanly when the client finishes.",
+    deviceGuides: {
+      windows: {
+        label: "Windows PC",
+        environment:
+          "Use two Ubuntu terminals through WSL 2. One runs the server and the other runs the client.",
+      },
+      macos: {
+        label: "iMac / macOS",
+        environment:
+          "Use two macOS Terminal windows. Python's socket tools work directly on macOS for this localhost lab.",
+      },
+    },
     steps: [
+      {
+        title: "Open two terminals",
+        detail: "You need one terminal for the server and one for the client.",
+        device: {
+          windows: {
+            title: "Open two Ubuntu terminals",
+            detail:
+              "Open two PowerShell windows and run this in each one. Keep both terminals in the same project folder.",
+            code: "wsl ~",
+          },
+          macos: {
+            title: "Open two macOS terminals",
+            detail:
+              "Open two Terminal windows, move both into the same project folder, and confirm Python 3 is available.",
+            code: "python3 --version",
+          },
+        },
+      },
       {
         title: "Create server.py",
         detail:
@@ -331,6 +522,18 @@ export const WEEKLY_TASKS: WeeklyTask[] = [
       "Explaining without notes exposes gaps that recognition-based studying hides. A short recording also gives you a reusable way to measure whether your mental model is getting clearer.",
     deliverable:
       "A two-minute recording that accurately contrasts process vs. thread and TCP vs. UDP using one concrete example for each comparison.",
+    deviceGuides: {
+      windows: {
+        label: "Windows PC",
+        environment:
+          "Use Sound Recorder, Camera, or another recorder already on your Windows PC. The recording can stay private.",
+      },
+      macos: {
+        label: "iMac / macOS",
+        environment:
+          "Use QuickTime Player's New Audio Recording, Voice Memos, or another recorder already on your iMac. The recording can stay private.",
+      },
+    },
     steps: [
       {
         title: "Write a four-line outline",
@@ -346,6 +549,16 @@ export const WEEKLY_TASKS: WeeklyTask[] = [
         title: "Record one uninterrupted take",
         detail:
           "Set a two-minute timer. Define each term, compare the trade-offs, and use both examples without reading notes.",
+        device: {
+          windows: {
+            detail:
+              "Open Sound Recorder or Camera on Windows, set a two-minute timer, then explain both comparisons without reading notes.",
+          },
+          macos: {
+            detail:
+              "In QuickTime Player choose File > New Audio Recording, or open Voice Memos. Set a two-minute timer, then explain both comparisons without reading notes.",
+          },
+        },
       },
       {
         title: "Review with a strict rubric",
@@ -377,6 +590,23 @@ export const WEEKLY_TASKS: WeeklyTask[] = [
   },
 ]
 
+const LINUX_MODULE_ENTRY_STEP: CourseModuleStructuredStep = {
+  title: "Open the Linux lab",
+  detail: "Choose your computer above, then run the rest of this lab inside Ubuntu.",
+  device: {
+    windows: {
+      title: "Open Ubuntu on your Windows PC",
+      detail: "Run this in PowerShell, then keep every remaining command inside Ubuntu through WSL 2.",
+      code: "wsl ~",
+    },
+    macos: {
+      title: "Open Ubuntu on your iMac",
+      detail: "Run this in macOS Terminal, then keep every remaining command inside the saved Ubuntu VM.",
+      code: "multipass shell signal-path",
+    },
+  },
+}
+
 export const COURSES: Record<string, CourseInfo> = {
   cs149: {
     code: "CS 149",
@@ -393,6 +623,30 @@ export const COURSES: Record<string, CourseInfo> = {
     story:
       "This course asks you to stop treating the operating system as background magic. You will reason about what happens between a program and the hardware: who gets the CPU, where bytes live, what can run at the same time, and how files survive. Recent public SJSU syllabi converge on C, Linux, processes, memory, concurrency, and filesystems—even when the exact project changes.",
     evidenceNote: "Strong current evidence",
+    deviceGuides: {
+      windows: {
+        label: "Windows PC",
+        environment:
+          "Use Ubuntu through WSL 2 for every CS 149 lab. Open it from PowerShell, then run the lab commands inside Ubuntu.",
+        resources: [
+          {
+            label: "Install WSL · Microsoft",
+            url: "https://learn.microsoft.com/en-us/windows/wsl/install",
+          },
+        ],
+      },
+      macos: {
+        label: "iMac / macOS",
+        environment:
+          "Use the saved Ubuntu VM through Multipass for every CS 149 lab. Open it from Terminal, then run the lab commands inside Ubuntu.",
+        resources: [
+          {
+            label: "Install Multipass · Ubuntu",
+            url: "https://documentation.ubuntu.com/multipass/latest/how-to-guides/install-multipass/",
+          },
+        ],
+      },
+    },
     modules: [
       {
         id: "os-c-workbench",
@@ -403,6 +657,7 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Every recent technical syllabus points toward C. Comfort with memory and compiler feedback removes avoidable friction before the operating-systems ideas get difficult.",
         steps: [
+          LINUX_MODULE_ENTRY_STEP,
           "Compile with -Wall -Wextra -Wpedantic and explain every warning you fix.",
           "Implement a resizable integer vector using malloc, realloc, and free.",
           "Trigger one memory bug intentionally, find it with a debugger or sanitizer, and write a three-sentence postmortem.",
@@ -424,6 +679,7 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Spring 2026 CS 149 materials explicitly use Linux, the command line, C, and Bash. The terminal should become your instrument panel, not another assignment.",
         steps: [
+          LINUX_MODULE_ENTRY_STEP,
           "Practice navigation, permissions, redirection, pipelines, grep, and process inspection.",
           "Split a small C program into header and source files, then build it with Make.",
           "Use man pages to answer one question without searching for a tutorial.",
@@ -444,6 +700,7 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Processes and system calls appear at the beginning of current SJSU schedules and form the base for later IPC, scheduling, and concurrency work.",
         steps: [
+          LINUX_MODULE_ENTRY_STEP,
           "Draw the process tree for two nested fork calls before executing the program.",
           "Build a parent process that launches a command with fork + exec and waits for it.",
           "Add exit-status reporting and a SIGINT handler; document what belongs to the shell versus the child.",
@@ -463,6 +720,7 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Current CS 149 syllabi name pipes, sockets, file I/O, and shared memory. File descriptors are the common language beneath them.",
         steps: [
+          LINUX_MODULE_ENTRY_STEP,
           "Copy a file using open, read, write, and close—no stdio helpers.",
           "Connect two child processes with pipe and dup2.",
           "Explain which descriptors each process must close and why a forgotten close can hang the program.",
@@ -482,6 +740,7 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Race conditions, locks, condition variables, semaphores, and concurrent structures occupy a large block in the latest SJSU schedule.",
         steps: [
+          LINUX_MODULE_ENTRY_STEP,
           "Create a reproducible race on a shared counter and explain why the output changes.",
           "Protect the invariant with a mutex, then compare correctness and timing.",
           "Implement a bounded queue using a mutex plus two condition variables; prove why each wait uses a loop.",
@@ -501,6 +760,7 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Scheduling is explicitly required and is a reliable source of both conceptual questions and small simulation projects.",
         steps: [
+          LINUX_MODULE_ENTRY_STEP,
           "Simulate FCFS, shortest-job-first, and round robin over the same workload.",
           "Calculate turnaround, waiting, and response time for each policy.",
           "Write one paragraph explaining when the lowest average turnaround is still a bad user experience.",
@@ -520,6 +780,7 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Memory hierarchy, locality, mapping, replacement, paging, and swapping are central official learning outcomes—not optional details.",
         steps: [
+          LINUX_MODULE_ENTRY_STEP,
           "Translate virtual addresses through a small page table by hand.",
           "Implement FIFO and LRU page replacement over a reference string.",
           "Graph page faults as frame count changes and explain one surprising result.",
@@ -539,6 +800,7 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Files, directories, disks, filesystem implementations, and direct I/O close the latest public CS 149 sequence.",
         steps: [
+          LINUX_MODULE_ENTRY_STEP,
           "Trace path lookup from a filename to inode to data blocks.",
           "Compare contiguous, linked, and indexed allocation on access time and fragmentation.",
           "Inspect one real file with stat and explain at least five fields in operating-system terms.",
@@ -566,6 +828,26 @@ export const COURSES: Record<string, CourseInfo> = {
     story:
       "Computer networks is really a course about contracts between layers. You will follow data from an application into transport, routing, links, and back again, then test those ideas with packet captures and sockets. Wireshark and TCP/UDP programming are stable preparation targets. The programming language changes by instructor: the newest Ishigaki syllabus names Python, while older sections used Java.",
     evidenceNote: "Stable concepts; variable implementation",
+    deviceGuides: {
+      windows: {
+        label: "Windows PC",
+        environment:
+          "Use PowerShell, Windows Python, and Wireshark on Windows. The guide changes command names and flags where Windows differs.",
+        resources: [
+          { label: "Download Wireshark", url: "https://www.wireshark.org/download.html" },
+          { label: "Python for Windows", url: "https://www.python.org/downloads/windows/" },
+        ],
+      },
+      macos: {
+        label: "iMac / macOS",
+        environment:
+          "Use Terminal, Python 3, and Wireshark on macOS. The guide changes command names and flags where macOS differs.",
+        resources: [
+          { label: "Download Wireshark", url: "https://www.wireshark.org/download.html" },
+          { label: "Python for macOS", url: "https://www.python.org/downloads/macos/" },
+        ],
+      },
+    },
     modules: [
       {
         id: "net-packet",
@@ -596,7 +878,22 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Wireshark appears across SJSU sections from 2021 through 2026. Seeing packets turns protocol diagrams into observable behavior.",
         steps: [
-          "Run ping, traceroute, and a DNS lookup; predict the traffic each command creates.",
+          {
+            title: "Run the network checks for this computer",
+            detail: "Keep Wireshark open, predict the traffic first, then run these commands while capturing.",
+            device: {
+              windows: {
+                detail:
+                  "In PowerShell, run the Windows versions of ping, route tracing, and DNS lookup while capturing your active Wi-Fi or Ethernet connection.",
+                code: "ping -n 4 example.com\ntracert example.com\nnslookup example.com",
+              },
+              macos: {
+                detail:
+                  "In Terminal, run the macOS versions of ping, route tracing, and DNS lookup while capturing your active Wi-Fi or Ethernet connection.",
+                code: "ping -c 4 example.com\ntraceroute example.com\ndig example.com",
+              },
+            },
+          },
           "Capture a DNS query and label request, response, addresses, ports, and timing.",
           "Capture a TCP three-way handshake and explain every flag and sequence transition.",
         ],
@@ -616,9 +913,35 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "The newest public Ishigaki syllabus explicitly requires Python, and socket programming is a current course outcome across sections.",
         steps: [
+          {
+            title: "Create a Python environment",
+            detail: "Create a local virtual environment so both programs use the same Python setup.",
+            device: {
+              windows: {
+                detail: "Run this in PowerShell from the lab folder.",
+                code: "py -m venv .venv\n.\\.venv\\Scripts\\python.exe --version",
+              },
+              macos: {
+                detail: "Run this in Terminal from the lab folder.",
+                code: "python3 -m venv .venv\n./.venv/bin/python --version",
+              },
+            },
+          },
           "Build a UDP client/server pair and observe what happens when a datagram is lost.",
           "Build a TCP echo pair, handling partial reads and clean shutdown.",
           "Add length-prefixed framing and support two clients concurrently.",
+          {
+            title: "Run the server and client",
+            detail: "Start the server first. Run the client in a second terminal from the same folder.",
+            device: {
+              windows: {
+                code: ".\\.venv\\Scripts\\python.exe server.py\n# Second PowerShell window\n.\\.venv\\Scripts\\python.exe client.py",
+              },
+              macos: {
+                code: "./.venv/bin/python server.py\n# Second Terminal window\n./.venv/bin/python client.py",
+              },
+            },
+          },
         ],
         resources: [
           { label: "Python socket documentation", url: "https://docs.python.org/3/library/socket.html" },
@@ -635,8 +958,32 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Recent sections cover web, email, DNS, P2P, and content distribution before or alongside transport fundamentals.",
         steps: [
-          "Send a valid HTTP request over a TCP socket and parse the status line plus headers.",
-          "Use dig or nslookup to trace several DNS record types.",
+          {
+            title: "Run your raw HTTP client",
+            detail: "Send a valid HTTP request over a TCP socket and parse the status line plus headers.",
+            device: {
+              windows: {
+                code: "py -m venv .venv\n.\\.venv\\Scripts\\python.exe http_client.py",
+              },
+              macos: {
+                code: "python3 -m venv .venv\n./.venv/bin/python http_client.py",
+              },
+            },
+          },
+          {
+            title: "Inspect two DNS record types",
+            detail: "Compare the A and MX answers and note which server returned them.",
+            device: {
+              windows: {
+                detail: "Run Windows' built-in DNS lookup tool in PowerShell.",
+                code: "nslookup -type=A example.com\nnslookup -type=MX example.com",
+              },
+              macos: {
+                detail: "Run macOS' DNS query tool in Terminal.",
+                code: "dig A example.com\ndig MX example.com",
+              },
+            },
+          },
           "Explain what a CDN changes—and what it cannot change—about a request path.",
         ],
         resources: [
@@ -654,9 +1001,33 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Reliable data transfer, sliding windows, TCP/UDP, and flow control are stable exam and programming targets across the syllabus history.",
         steps: [
+          {
+            title: "Create a Python environment",
+            detail: "Create a local environment before building the reliable-UDP program.",
+            device: {
+              windows: {
+                code: "py -m venv .venv\n.\\.venv\\Scripts\\python.exe --version",
+              },
+              macos: {
+                code: "python3 -m venv .venv\n./.venv/bin/python --version",
+              },
+            },
+          },
           "Simulate stop-and-wait over a link that randomly loses packets and ACKs.",
           "Add sequence numbers, timeouts, and retransmission.",
           "Extend to a small sliding window and compare throughput as RTT increases.",
+          {
+            title: "Run the reliable-UDP lab",
+            detail: "Run the finished file from the same folder and save the output from at least three trials.",
+            device: {
+              windows: {
+                code: ".\\.venv\\Scripts\\python.exe reliable_udp.py",
+              },
+              macos: {
+                code: "./.venv/bin/python reliable_udp.py",
+              },
+            },
+          },
         ],
         resources: [
           { label: "Systems Approach · Reliable byte stream", url: "https://book.systemsapproach.org/e2e/tcp.html" },
@@ -673,7 +1044,21 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Performance and congestion are explicit parts of the official description and prominent in the newest top-down SJSU sequence.",
         steps: [
-          "Measure RTT and throughput under at least three controlled conditions.",
+          {
+            title: "Save a repeatable RTT sample",
+            detail: "Run the same target under at least three controlled conditions and keep each raw output file.",
+            device: {
+              windows: {
+                detail: "Run this in PowerShell. Change the output filename for each condition.",
+                code: "ping -n 20 1.1.1.1 | Tee-Object -FilePath ping-windows.txt",
+              },
+              macos: {
+                detail: "Run this in Terminal. Change the output filename for each condition.",
+                code: "ping -c 20 1.1.1.1 | tee ping-macos.txt",
+              },
+            },
+          },
+          "Measure throughput under the same three conditions and save each raw result.",
           "Graph the results with uncertainty or repeated trials instead of one-off numbers.",
           "Identify the bottleneck and distinguish congestion control from flow control.",
         ],
@@ -691,6 +1076,20 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "Network-layer routing and link-layer LAN concepts occupy a large share of recent SJSU schedules and often require hand calculation.",
         steps: [
+          {
+            title: "Inspect this computer's network tables",
+            detail: "Find the active interface, ARP neighbors, routes, and the path to one public hostname.",
+            device: {
+              windows: {
+                detail: "Run the Windows network tools in PowerShell.",
+                code: "ipconfig /all\narp -a\nroute print\ntracert example.com",
+              },
+              macos: {
+                detail: "Run the macOS network tools in Terminal.",
+                code: "ifconfig\narp -a\nnetstat -rn\ntraceroute example.com",
+              },
+            },
+          },
           "Complete ten CIDR/subnet exercises and check every network/broadcast boundary.",
           "Apply longest-prefix matching to a forwarding table.",
           "Trace a packet from one LAN to another, naming ARP, switch, router, and TTL behavior.",
@@ -711,7 +1110,23 @@ export const COURSES: Record<string, CourseInfo> = {
         why:
           "This lab bridges your intended data-science niche with networking while remaining grounded in current course outcomes: measurement, performance, programming, and explanation.",
         steps: [
-          "Collect non-sensitive RTT or throughput observations at regular intervals.",
+          {
+            title: "Create the environment and collect raw RTT data",
+            detail:
+              "Collect only non-sensitive measurements. Keep the raw file unchanged; Windows and macOS format ping output differently.",
+            device: {
+              windows: {
+                detail:
+                  "In PowerShell, create the Python environment and save 30 Windows ping results. Keep this raw file before parsing it.",
+                code: "py -m venv .venv\nping -n 30 1.1.1.1 | Tee-Object -FilePath ping-windows.txt\n.\\.venv\\Scripts\\python.exe --version",
+              },
+              macos: {
+                detail:
+                  "In Terminal, create the Python environment and save 30 macOS ping results. Keep this raw file before parsing it.",
+                code: "python3 -m venv .venv\nping -c 30 1.1.1.1 | tee ping-macos.txt\n./.venv/bin/python --version",
+              },
+            },
+          },
           "Clean and validate the measurements in pandas; keep the raw data immutable.",
           "Visualize distributions, time trends, and outliers, then explain what the network evidence can and cannot prove.",
         ],

@@ -15,6 +15,10 @@ export type WorkspaceView =
 
 export type ResourceStatus = 'planned' | 'in-progress' | 'complete'
 
+export type CareerDevice = 'windows' | 'macos'
+
+export type DeviceNotes = Partial<Record<CareerDevice, string>>
+
 export type PathProfile = {
   id: PathId
   name: string
@@ -50,6 +54,7 @@ export type LearningResource = {
   url: string
   why: string
   action: string
+  deviceNotes?: DeviceNotes
   kind: 'Primary spine' | 'Practice' | 'Reference' | 'Alternative' | 'Community'
   evidence: 'Official' | 'Community'
   verified: string
@@ -62,6 +67,7 @@ export type RoadmapTask = {
   effort: string
   output: string
   resourceIds: string[]
+  deviceNotes?: DeviceNotes
   optional?: boolean
 }
 
@@ -85,6 +91,7 @@ export type CareerProject = {
   time: string
   difficulty: 'Foundation' | 'Intermediate' | 'Advanced'
   stack: string[]
+  deviceNote?: string
   milestones: string[]
   acceptance: string[]
   interviewProof: string[]
@@ -94,6 +101,36 @@ export type CareerProject = {
 }
 
 const verified = 'July 2026'
+
+const shellDeviceNotes: DeviceNotes = {
+  windows: 'Use the Ubuntu shell in WSL 2 so the Unix commands and scripts behave consistently.',
+  macos: 'Use Terminal for general shell work; open your Multipass Ubuntu shell when a lesson assumes Linux.',
+}
+
+const postgresDeviceNotes: DeviceNotes = {
+  windows: 'Run PostgreSQL in WSL 2 Ubuntu or Docker Desktop, and keep the project files in the same environment.',
+  macos: 'Run PostgreSQL on macOS or in Docker Desktop, and keep the project files in the same environment.',
+}
+
+const dockerDeviceNotes: DeviceNotes = {
+  windows: 'Use Docker Desktop with its WSL 2 backend enabled.',
+  macos: 'Use Docker Desktop for Mac and choose the installer that matches your iMac processor.',
+}
+
+const linuxLabDeviceNotes: DeviceNotes = {
+  windows: 'Open WSL 2 Ubuntu for the Linux commands and SSH work.',
+  macos: 'Use Terminal for SSH; open your Multipass Ubuntu shell for Linux-only practice.',
+}
+
+const networkLabDeviceNotes: DeviceNotes = {
+  windows: 'Capture in Wireshark on Windows; use tracert and nslookup in PowerShell.',
+  macos: 'Capture in Wireshark on macOS; use traceroute and dig in Terminal.',
+}
+
+const twoDeviceSocNotes: DeviceNotes = {
+  windows: 'Use the Windows PC as the monitored endpoint and keep the Wazuh lab isolated on the iMac.',
+  macos: 'Use the iMac for the isolated Wazuh lab and enroll the Windows PC as the monitored endpoint.',
+}
 
 export const pathProfiles: PathProfile[] = [
   {
@@ -280,6 +317,7 @@ export const resources: LearningResource[] = [
     url: 'https://missing.csail.mit.edu/',
     why: 'Shell, Git, debugging, editors, and automation make every later project faster and more reproducible.',
     action: 'Complete shell, Git, debugging, and data-wrangling lectures; publish a dotfiles or scripts repo.',
+    deviceNotes: shellDeviceNotes,
     kind: 'Primary spine',
     evidence: 'Official',
     verified,
@@ -331,6 +369,7 @@ export const resources: LearningResource[] = [
     url: 'https://www.postgresql.org/docs/current/tutorial.html',
     why: 'Builds durable SQL and relational-database foundations without hiding the real database behind a platform.',
     action: 'Create a local database and demonstrate joins, aggregates, transactions, views, and one index.',
+    deviceNotes: postgresDeviceNotes,
     kind: 'Reference',
     evidence: 'Official',
     verified,
@@ -348,6 +387,7 @@ export const resources: LearningResource[] = [
     url: 'https://docs.docker.com/get-started/',
     why: 'Makes projects reproducible and creates a practical bridge from laptop code to deployed services and labs.',
     action: 'Containerize the app and database, then prove a clean setup from one documented command.',
+    deviceNotes: dockerDeviceNotes,
     kind: 'Primary spine',
     evidence: 'Official',
     verified,
@@ -883,6 +923,7 @@ export const resources: LearningResource[] = [
     url: 'https://testcontainers.com/guides/getting-started-with-testcontainers-for-java/',
     why: 'Runs integration tests against real infrastructure while preserving isolated, repeatable test environments.',
     action: 'Replace the fake database in tests with PostgreSQL Testcontainers and prove migrations run cleanly.',
+    deviceNotes: dockerDeviceNotes,
     kind: 'Practice',
     evidence: 'Official',
     verified,
@@ -936,6 +977,7 @@ export const resources: LearningResource[] = [
     url: 'https://overthewire.org/wargames/bandit/',
     why: 'Builds Linux, SSH, permissions, pipes, and file-inspection fluency through a legal purpose-built environment.',
     action: 'Complete levels 0–20 and keep a sanitized command journal explaining each lesson.',
+    deviceNotes: linuxLabDeviceNotes,
     kind: 'Practice',
     evidence: 'Community',
     verified,
@@ -987,6 +1029,7 @@ export const resources: LearningResource[] = [
     url: 'https://owasp.org/www-project-juice-shop/',
     why: 'A deliberately vulnerable local app for safe practice across realistic web-security categories.',
     action: 'Run locally, document scope, solve selected challenges, and pair each finding with remediation and verification.',
+    deviceNotes: dockerDeviceNotes,
     kind: 'Practice',
     evidence: 'Official',
     verified,
@@ -1038,6 +1081,7 @@ export const resources: LearningResource[] = [
     url: 'https://documentation.wazuh.com/current/quickstart.html',
     why: 'Provides a practical open-source stack for collecting endpoint events, detecting behavior, and triaging alerts.',
     action: 'Deploy in an isolated lab, enroll one endpoint, generate safe test events, and write a triage runbook.',
+    deviceNotes: twoDeviceSocNotes,
     kind: 'Primary spine',
     evidence: 'Official',
     verified,
@@ -1216,6 +1260,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '8–10 hours',
           output: 'Twenty saved queries plus a one-page SQL pattern sheet.',
           resourceIds: ['sqlbolt', 'postgres-tutorial'],
+          deviceNotes: postgresDeviceNotes,
         },
         {
           id: 'ds-foundations-python',
@@ -1232,6 +1277,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '5 hours',
           output: 'A public repo another student can reproduce from a clean checkout.',
           resourceIds: ['missing-semester', 'github-skills'],
+          deviceNotes: shellDeviceNotes,
         },
       ],
     },
@@ -1407,6 +1453,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '6 hours',
           output: 'A clean Docker Compose setup and architecture diagram.',
           resourceIds: ['docker-start', 'missing-semester'],
+          deviceNotes: dockerDeviceNotes,
         },
       ],
     },
@@ -1564,6 +1611,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '8 hours',
           output: 'A workflow cheat sheet and two GitHub Skills completions.',
           resourceIds: ['missing-semester', 'github-skills'],
+          deviceNotes: shellDeviceNotes,
         },
         {
           id: 'swe-foundations-ts',
@@ -1666,6 +1714,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '8 hours',
           output: 'Reproducible images and a documented release command.',
           resourceIds: ['docker-start'],
+          deviceNotes: dockerDeviceNotes,
         },
         {
           id: 'swe-production-observe',
@@ -1821,6 +1870,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '7 hours',
           output: 'Testcontainers integration tests running in CI.',
           resourceIds: ['testcontainers-java', 'junit-guide'],
+          deviceNotes: dockerDeviceNotes,
         },
       ],
     },
@@ -1911,6 +1961,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '14 hours',
           output: 'An annotated packet capture for DNS, TCP/TLS, and one web request.',
           resourceIds: ['cisco-netacad', 'mdn-http'],
+          deviceNotes: networkLabDeviceNotes,
         },
         {
           id: 'cyber-foundations-linux',
@@ -1919,6 +1970,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '10 hours',
           output: 'Bandit 0–20 notes and a small investigation command guide.',
           resourceIds: ['overthewire-bandit', 'missing-semester'],
+          deviceNotes: linuxLabDeviceNotes,
         },
         {
           id: 'cyber-foundations-scope',
@@ -1945,6 +1997,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '12 hours',
           output: 'A lab architecture, asset list, and working event search.',
           resourceIds: ['wazuh-docs', 'docker-start'],
+          deviceNotes: twoDeviceSocNotes,
         },
         {
           id: 'cyber-defensive-triage',
@@ -1961,6 +2014,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '6 hours',
           output: 'A labeled event set with expected telemetry and cleanup steps.',
           resourceIds: ['wazuh-docs'],
+          deviceNotes: twoDeviceSocNotes,
         },
       ],
     },
@@ -2021,6 +2075,7 @@ export const roadmapsByPath: Record<PathId, RoadmapPhase[]> = {
           effort: '10 hours',
           output: 'A professional finding report for five issues.',
           resourceIds: ['owasp-juice-shop', 'docker-start'],
+          deviceNotes: dockerDeviceNotes,
         },
         {
           id: 'cyber-appsec-code',
@@ -2537,6 +2592,7 @@ export const projectsByPath: Record<PathId, CareerProject[]> = {
       time: '5–7 weeks',
       difficulty: 'Advanced',
       stack: ['Wazuh', 'Sigma', 'Linux', 'Windows', 'Wireshark', 'Python', 'Docker'],
+      deviceNote: 'Use both devices: keep one machine as the isolated lab host and enroll the other as the monitored endpoint. Document each role before generating test events.',
       milestones: [
         'Write rules of engagement, isolate the network, inventory assets, and diagram data flow.',
         'Collect authentication, process, network, file, and system events with synchronized time.',

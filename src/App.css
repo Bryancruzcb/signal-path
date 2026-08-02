@@ -2110,29 +2110,33 @@ textarea:focus-visible {
   transition: color 160ms ease, background 160ms ease;
 }
 
-.module-row:hover {
-  color: #fff;
-  background: var(--ink);
-}
-
 .module-row.is-complete {
   background: rgba(145, 232, 196, 0.14);
 }
 
+.module-row:is(:hover, :focus-within) {
+  color: #fff;
+  background: var(--ink);
+}
+
 .module-number {
   padding-left: 18px;
-  color: var(--signal);
+  color: var(--signal-deep);
   font-family: var(--font-mono);
   font-size: 0.68rem;
+}
+
+.module-row:is(:hover, :focus-within) .module-number {
+  color: var(--signal);
 }
 
 .module-main {
   padding: 20px 22px 20px 0;
 }
 
-.module-main strong {
+.module-main h4 {
   display: block;
-  margin-bottom: 5px;
+  margin: 0 0 5px;
   font-size: 1.02rem;
 }
 
@@ -2143,8 +2147,8 @@ textarea:focus-visible {
   font-size: 0.78rem;
 }
 
-.module-row:hover .module-main p,
-.module-row:hover .module-deliverable {
+.module-row:is(:hover, :focus-within) .module-main p,
+.module-row:is(:hover, :focus-within) .module-deliverable {
   color: rgba(255, 255, 255, 0.55);
 }
 
@@ -2159,6 +2163,17 @@ textarea:focus-visible {
   min-width: 96px;
 }
 
+.module-row:is(:hover, :focus-within) .module-action .button-secondary {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.module-row:is(:hover, :focus-within) .module-action .button-secondary:hover {
+  color: var(--ink);
+  background: var(--paper-bright);
+  border-color: var(--paper-bright);
+}
+
 .module-complete-button {
   width: 44px;
   height: 44px;
@@ -2169,7 +2184,7 @@ textarea:focus-visible {
   border-radius: 0;
 }
 
-.module-row:hover .module-complete-button {
+.module-row:is(:hover, :focus-within) .module-complete-button {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.38);
 }

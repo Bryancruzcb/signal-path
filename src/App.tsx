@@ -1309,6 +1309,10 @@ function App() {
       focusLog,
     }
     if (timerRunning) {
+      if (timer.endAt === null) {
+        setTimerRunning(false)
+        return
+      }
       const step = pauseStep(timer, now)
       if (step.type === 'bank') {
         applyBankedTimer(step.timer)

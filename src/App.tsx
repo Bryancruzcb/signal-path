@@ -115,7 +115,7 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '02',
     label: 'Course prep',
     shortLabel: 'Courses',
-    context: 'Waitlist preparation / CS 149 + CS 158A',
+    context: 'Enrolled · Fall 2026 / CS 149 + CS 158A',
     title: 'Course prep',
     group: 'Prepare',
   },
@@ -1622,11 +1622,11 @@ function App() {
                   01 / THIS WEEK · {new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}
                 </p>
                 <h2>
-                  Get ready
-                  <span>before the semester starts.</span>
+                  Keep going
+                  <span>through this semester.</span>
                 </h2>
                 <p>
-                  Use the waitlist period to practice processes, networks, and the skills you will need for Summer 2027 internships.
+                  CS 149 and CS 158A are enrolled for Fall 2026. Practice processes, networks, and the skills you will need for Summer 2027 internships.
                 </p>
                 <div className="dashboard-actions">
                   <button className="button button-primary button-large" type="button" onClick={() => navigate('courses')}>
@@ -1815,7 +1815,7 @@ function App() {
               </aside>
             </div>
 
-            {/* SJSU Waitlisted Course readiness */}
+            {/* Course readiness */}
             <section className="course-readiness" aria-labelledby="course-readiness-heading" style={{ marginTop: '48px' }}>
               <div className="section-heading-row course-readiness-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div>
@@ -1839,7 +1839,7 @@ function App() {
                         <span className={`course-code ${course.tone === 'network' ? 'network' : ''}`}>
                           <i aria-hidden="true"></i>{course.code}
                         </span>
-                        <span className="waitlist-pill">WAITLISTED</span>
+                        <span className="status-pill">{course.status}</span>
                       </div>
                       <h4>{course.title}</h4>
                       <p>{course.likelyStack} · {course.evidenceNote}.</p>
@@ -1930,7 +1930,7 @@ function App() {
           <section className="view is-active" id="view-courses">
             <ViewIntro
               eyebrow="02 / COURSE PREP"
-              title="Practice the basics before the semester."
+              title="Practice the core ideas this semester."
               description="Each module gives you something to run, inspect, or explain. Assignments may change by instructor, but the core ideas stay useful."
               action={
                 <div className="course-selector" role="group" aria-label="Choose a course">
@@ -2160,7 +2160,7 @@ function App() {
             <div className="roadmap-footer-note" style={{ display: 'flex', gap: '10px', marginTop: '24px', padding: '16px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-sm)', color: 'var(--muted)', fontSize: '0.84rem' }}>
               <span aria-hidden="true">↳</span>
               <p style={{ margin: '0' }}>
-                <strong>Waitlist tip:</strong> choose one backup that still counts toward your degree for every hard-to-get CS course.
+                <strong>Backup tip:</strong> choose one backup that still counts toward your degree for every hard-to-get CS course.
               </p>
             </div>
 

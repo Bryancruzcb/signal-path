@@ -1151,7 +1151,7 @@ textarea:focus-visible {
 }
 
 .evidence-pill,
-.waitlist-pill,
+.status-pill,
 .optional-tag,
 .stack-chip {
   display: inline-flex;

@@ -2,7 +2,7 @@
 
 ## One-Sentence Brief
 
-Build an evidence-based, interactive workspace that helps a rising SJSU computer science junior compare and pursue data science, data engineering, software engineering, Java backend, cybersecurity, and ML engineering internships before Summer 2027 — while preparing for waitlisted SJSU systems courses.
+Build an evidence-based, interactive workspace that helps a rising SJSU computer science junior compare and pursue data science, data engineering, software engineering, Java backend, cybersecurity, and ML engineering internships before Summer 2027 — while taking SJSU CS 149 and CS 158A.
 
 ## Honest Career Thesis
 

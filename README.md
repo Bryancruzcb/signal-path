@@ -4,7 +4,7 @@ I built this to run my degree plan and job search from one browser tab.
 
 **[Open the live app →](https://bryancruzcb.github.io/signal-path/)**
 
-Course-prep labs for waitlisted systems courses, a four-term academic plan, six career tracks, a curated resource stack, and a Summer 2027 internship application tracker. Everything persists in the browser's local storage — no account, no backend, no analytics. About 7,000 lines of TypeScript across ten independently persisted storage keys, with a JSON export/import file as the only backup.
+Course-prep labs for enrolled Fall 2026 systems courses, a four-term academic plan, six career tracks, a curated resource stack, and a Summer 2027 internship application tracker. Everything persists in the browser's local storage — no account, no backend, no analytics. About 7,000 lines of TypeScript across ten independently persisted storage keys, with a JSON export/import file as the only backup.
 
 ## What was actually hard
 

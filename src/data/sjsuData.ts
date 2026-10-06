@@ -612,7 +612,7 @@ export const COURSES: Record<string, CourseInfo> = {
     code: "CS 149",
     title: "Operating Systems",
     tone: "os",
-    status: "Waitlisted · Fall 2026",
+    status: "Enrolled · Fall 2026",
     official:
       "Memory management, processor scheduling and interrupts, concurrent and synchronized processes, deadlocks, parallel computing, files, and substantial programming work.",
     prereqs: "CS 47 + CS 146 (C− or better)",
@@ -817,7 +817,7 @@ export const COURSES: Record<string, CourseInfo> = {
     code: "CS 158A",
     title: "Computer Networks",
     tone: "network",
-    status: "Waitlisted · Fall 2026",
+    status: "Enrolled · Fall 2026",
     official:
       "Layered architectures, LAN/WAN and wireless networks, TCP/IP, network programming, performance, resource management, security, and applications.",
     prereqs: "CS 146 + CS 47 (current catalog wording)",
@@ -1172,8 +1172,8 @@ export const ROADMAP: RoadmapTerm[] = [
       { code: "GE AREA S", title: "Upper-division GE · online", kind: "plain", id: "ge-s", url: UPPER_GE_URL },
       { code: "GE AREA V", title: "Upper-division GE · online", kind: "plain", id: "ge-v", url: UPPER_GE_URL },
     ],
-    noteTitle: "If a waitlist does not clear",
-    note: "Use CS 157A first, then CS 147, then another required core. The three online GE sections are locked in, and math plus lower-division GE are already complete.",
+    noteTitle: "Fall 2026 enrollment",
+    note: "CS 149 and CS 158A are enrolled. The three online GE sections are locked in, and math plus lower-division GE are already complete.",
   },
   {
     year: "YEAR 3 · SPRING",

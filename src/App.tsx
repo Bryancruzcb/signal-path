@@ -62,21 +62,23 @@ import {
   type GuideDevice,
 } from './data/sjsuData'
 import { resources as roadmapResources } from './data/roadmap'
+import {
+  FOCUS_BLOCK_SECONDS,
+  pauseStep,
+  remainingFromStorage,
+  resyncStep,
+  startStep,
+  unloadStep,
+  type FocusLog,
+  type FocusTimerState,
+} from './focusTimer'
+import {
+  APPLICATION_STATUSES,
+  parseProgressImportText,
+  type Application,
+  type ApplicationStatus,
+} from './parseProgressImport'
 import './App.css'
-
-
-type ApplicationStatus = 'Saved' | 'Applied' | 'Screen' | 'Interview' | 'Offer' | 'Closed'
-
-type Application = {
-  id: string
-  pathId: PathId
-  company: string
-  role: string
-  url: string
-  date: string
-  status: ApplicationStatus
-  nextStep: string
-}
 
 type AppWorkspaceView =
   | 'dashboard'
@@ -240,15 +242,6 @@ function durationToMinutes(duration: string) {
   if (hours) return Number(hours[1]) * 60
   return 0
 }
-
-const statusOptions: ApplicationStatus[] = [
-  'Saved',
-  'Applied',
-  'Screen',
-  'Interview',
-  'Offer',
-  'Closed',
-]
 
 const referralDraft = `Hey [Name] — I’ve narrowed my target to [role family] and have been preparing around [skills]. I built [project] to answer [decision], and I can walk through the trade-offs and recommendation. Would you be open to a 20-minute conversation about how the role works at [company] and where my gaps still are? No pressure on a referral—I’d value your candid feedback first.`
 
@@ -515,21 +508,19 @@ function App() {
   const [activeCourse, setActiveCourse] = useState<string>(() =>
     localStorage.getItem(storage.activeCourse) ?? 'cs149'
   )
-  const [focusLog, setFocusLog] = useState<{ minutes: number; sessions: number }>(() =>
-    readObject<{ minutes: number; sessions: number }>(storage.focusLog, { minutes: 0, sessions: 0 })
+  const [focusLog, setFocusLog] = useState<FocusLog>(() =>
+    readObject<FocusLog>(storage.focusLog, { minutes: 0, sessions: 0 })
   )
 
   // Timer state (remaining seconds survive a refresh; the running flag never does)
-  const [timerRemaining, setTimerRemaining] = useState(() => {
-    const stored = Number(localStorage.getItem(storage.timer) ?? Number.NaN)
-    // A stored 0 means the last focus block completed; start fresh instead of
-    // reviving the terminal state (which would log a phantom session on resume).
-    if (!Number.isFinite(stored) || stored <= 0) return 25 * 60
-    return Math.min(25 * 60, Math.max(1, Math.round(stored)))
-  })
+  const [timerRemaining, setTimerRemaining] = useState(() => remainingFromStorage(localStorage.getItem(storage.timer)))
   const [timerRunning, setTimerRunning] = useState(false)
   // Wall-clock deadline for the running timer; null whenever it is paused or idle.
   const timerEndAtRef = useRef<number | null>(null)
+  const timerRemainingRef = useRef(timerRemaining)
+  const focusLogRef = useRef(focusLog)
+  timerRemainingRef.current = timerRemaining
+  focusLogRef.current = focusLog
 
   // Modal / UI states
   const [openWeeklyTaskId, setOpenWeeklyTaskId] = useState<string | null>(null)
@@ -728,36 +719,26 @@ function App() {
   useEffect(() => {
     if (!timerRunning) return
 
+    const snapshot = (): FocusTimerState => ({
+      endAt: timerEndAtRef.current,
+      remainingSeconds: timerRemainingRef.current,
+      running: true,
+      focusLog: focusLogRef.current,
+    })
     const sync = () => {
-      const endAt = timerEndAtRef.current
-      if (endAt === null) return
-      const remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000))
-      if (remaining > 0) {
-        setTimerRemaining(remaining)
-        return
-      }
-      completeFocusBlock()
+      const step = resyncStep(snapshot(), Date.now())
+      if (step.type === 'tick') setTimerRemaining(step.remainingSeconds)
+      else if (step.type === 'bank') applyBankedTimer(step.timer)
     }
     const persist = () => {
-      const endAt = timerEndAtRef.current
-      if (endAt === null) return
-      const remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000))
-      if (remaining > 0) {
-        localStorage.setItem(storage.timer, String(remaining))
+      const step = unloadStep(snapshot(), Date.now())
+      if (step.effect.type === 'none') return
+      if (step.effect.type === 'remaining') {
+        localStorage.setItem(storage.timer, String(step.effect.remainingSeconds))
         return
       }
-      // The deadline expired before the completion tick fired: bank the finished
-      // block straight to storage (React state cannot flush during unload), then
-      // complete the in-memory state in case the page survives beforeunload. The
-      // storage write stays consistent because the focusLog effect above persists
-      // the same +25/+1 values, and the nulled deadline keeps this from re-firing
-      // on the pagehide that follows beforeunload.
-      const logged = readObject(storage.focusLog, { minutes: 0, sessions: 0 })
-      localStorage.setItem(
-        storage.focusLog,
-        JSON.stringify({ minutes: logged.minutes + 25, sessions: logged.sessions + 1 })
-      )
-      completeFocusBlock()
+      localStorage.setItem(storage.focusLog, JSON.stringify(step.effect.focusLog))
+      applyBankedTimer(step.timer)
     }
 
     const interval = setInterval(sync, 1000)
@@ -1265,114 +1246,22 @@ function App() {
     input.value = '' // allow re-importing the same file
     if (!file) return
 
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(await file.text())
-    } catch {
-      setToast('Import failed: file is not valid JSON.')
+    const parsed = parseProgressImportText(await file.text())
+    if (!parsed.ok) {
+      setToast(parsed.message)
       return
     }
-
-    const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-      typeof value === 'object' && value !== null && !Array.isArray(value)
-
-    const knownKeys = [
-      'selectedPath',
-      'completedTasks',
-      'resourceStates',
-      'completedMilestones',
-      'applications',
-      'weeklyTasksCompleted',
-      'guideDevice',
-      'modulesCompleted',
-      'knownCourses',
-      'focusLog',
-    ]
-    if (!isPlainObject(parsed) || !knownKeys.some((key) => key in parsed)) {
-      setToast('Import failed: not a Signal Path backup file.')
-      return
-    }
-
-    const toStringArray = (value: unknown[]) =>
-      value.filter((item): item is string => typeof item === 'string')
-    const toBooleanRecord = (value: Record<string, unknown>) =>
-      Object.fromEntries(
-        Object.entries(value).filter(([, item]) => typeof item === 'boolean')
-      ) as Record<string, boolean>
-    const resourceStatusValues: ResourceStatus[] = ['planned', 'in-progress', 'complete']
-    const isApplication = (value: unknown): value is Application =>
-      isPlainObject(value) &&
-      typeof value.id === 'string' &&
-      typeof value.pathId === 'string' &&
-      isPathId(value.pathId) &&
-      typeof value.company === 'string' &&
-      typeof value.role === 'string' &&
-      typeof value.url === 'string' &&
-      typeof value.date === 'string' &&
-      typeof value.status === 'string' &&
-      statusOptions.includes(value.status as ApplicationStatus) &&
-      typeof value.nextStep === 'string'
-
-    const restored: string[] = []
-    if (typeof parsed.selectedPath === 'string' && isPathId(parsed.selectedPath)) {
-      setSelectedPath(parsed.selectedPath)
-      restored.push('path')
-    }
-    if (Array.isArray(parsed.completedTasks)) {
-      setCompletedTasks(toStringArray(parsed.completedTasks))
-      restored.push('tasks')
-    }
-    if (isPlainObject(parsed.resourceStates)) {
-      setResourceStates(
-        Object.fromEntries(
-          Object.entries(parsed.resourceStates).filter(([, value]) =>
-            resourceStatusValues.includes(value as ResourceStatus)
-          )
-        ) as Record<string, ResourceStatus>
-      )
-      restored.push('resources')
-    }
-    if (Array.isArray(parsed.completedMilestones)) {
-      setCompletedMilestones(toStringArray(parsed.completedMilestones))
-      restored.push('milestones')
-    }
-    if (Array.isArray(parsed.applications)) {
-      setApplications(parsed.applications.filter(isApplication))
-      restored.push('applications')
-    }
-    if (isPlainObject(parsed.weeklyTasksCompleted)) {
-      setWeeklyTasksCompleted(toBooleanRecord(parsed.weeklyTasksCompleted))
-      restored.push('weekly tasks')
-    }
-    if (typeof parsed.guideDevice === 'string' && isGuideDevice(parsed.guideDevice)) {
-      setGuideDevice(parsed.guideDevice)
-      restored.push('guide device')
-    }
-    if (isPlainObject(parsed.modulesCompleted)) {
-      setModulesCompleted(toBooleanRecord(parsed.modulesCompleted))
-      restored.push('modules')
-    }
-    if (isPlainObject(parsed.knownCourses)) {
-      setKnownCourses(toBooleanRecord(parsed.knownCourses))
-      restored.push('courses')
-    }
-    if (
-      isPlainObject(parsed.focusLog) &&
-      typeof parsed.focusLog.minutes === 'number' &&
-      typeof parsed.focusLog.sessions === 'number'
-    ) {
-      setFocusLog({
-        minutes: Math.max(0, parsed.focusLog.minutes),
-        sessions: Math.max(0, parsed.focusLog.sessions),
-      })
-      restored.push('focus log')
-    }
-
-    if (restored.length === 0) {
-      setToast('Import failed: backup contained no restorable data.')
-      return
-    }
-    setToast(`Backup restored: ${restored.join(', ')}.`)
+    if (parsed.selectedPath !== undefined) setSelectedPath(parsed.selectedPath)
+    if (parsed.completedTasks !== undefined) setCompletedTasks(parsed.completedTasks)
+    if (parsed.resourceStates !== undefined) setResourceStates(parsed.resourceStates)
+    if (parsed.completedMilestones !== undefined) setCompletedMilestones(parsed.completedMilestones)
+    if (parsed.applications !== undefined) setApplications(parsed.applications)
+    if (parsed.weeklyTasksCompleted !== undefined) setWeeklyTasksCompleted(parsed.weeklyTasksCompleted)
+    if (parsed.guideDevice !== undefined) setGuideDevice(parsed.guideDevice)
+    if (parsed.modulesCompleted !== undefined) setModulesCompleted(parsed.modulesCompleted)
+    if (parsed.knownCourses !== undefined) setKnownCourses(parsed.knownCourses)
+    if (parsed.focusLog !== undefined) setFocusLog(parsed.focusLog)
+    setToast(`Backup restored: ${parsed.restored.join(', ')}.`)
   }
 
   function resetAllProgress() {
@@ -1391,9 +1280,9 @@ function App() {
     setResetArmed(false)
     setFocusLog({ minutes: 0, sessions: 0 })
     timerEndAtRef.current = null
-    setTimerRemaining(25 * 60)
+    setTimerRemaining(FOCUS_BLOCK_SECONDS)
     setTimerRunning(false)
-    localStorage.setItem(storage.timer, String(25 * 60))
+    localStorage.setItem(storage.timer, String(FOCUS_BLOCK_SECONDS))
     setToast('All progress reset on this device.')
   }
 
@@ -1402,48 +1291,49 @@ function App() {
     setToast('Conversation draft copied.')
   }
 
-  // Timer helpers
-  // Shared completion path: the sync tick, the pause button, and unload persistence
-  // can each observe the deadline expiring first. It runs outside any state updater
-  // (impure updaters double-fire under StrictMode); nulling the deadline before the
-  // state updates guarantees the session logs exactly once.
-  function completeFocusBlock() {
+  function applyBankedTimer(next: FocusTimerState) {
     timerEndAtRef.current = null
     setTimerRunning(false)
-    setTimerRemaining(25 * 60)
-    setFocusLog((log) => ({ minutes: log.minutes + 25, sessions: log.sessions + 1 }))
-    setToast("Focus block complete. Write down what surprised you before opening another tab.")
-    localStorage.setItem(storage.timer, String(25 * 60))
+    setTimerRemaining(FOCUS_BLOCK_SECONDS)
+    setFocusLog(next.focusLog)
+    setToast('Focus block complete. Write down what surprised you before opening another tab.')
+    localStorage.setItem(storage.timer, String(FOCUS_BLOCK_SECONDS))
   }
 
   function toggleTimer() {
-    if (timerRunning) {
-      // Pause: freeze the remaining seconds derived from the deadline, then drop it.
-      const endAt = timerEndAtRef.current
-      if (endAt !== null) {
-        const remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000))
-        if (remaining === 0) {
-          // The deadline expired before the completion tick fired: finish the
-          // block instead of stranding an unlogged session paused at 0.
-          completeFocusBlock()
-          return
-        }
-        timerEndAtRef.current = null
-        setTimerRemaining(remaining)
-        localStorage.setItem(storage.timer, String(remaining))
-      }
-      setTimerRunning(false)
-    } else {
-      timerEndAtRef.current = Date.now() + timerRemaining * 1000
-      setTimerRunning(true)
+    const now = Date.now()
+    const timer: FocusTimerState = {
+      endAt: timerEndAtRef.current,
+      remainingSeconds: timerRemaining,
+      running: timerRunning,
+      focusLog,
     }
+    if (timerRunning) {
+      if (timer.endAt === null) {
+        setTimerRunning(false)
+        return
+      }
+      const step = pauseStep(timer, now)
+      if (step.type === 'bank') {
+        applyBankedTimer(step.timer)
+        return
+      }
+      timerEndAtRef.current = null
+      setTimerRemaining(step.timer.remainingSeconds)
+      localStorage.setItem(storage.timer, String(step.timer.remainingSeconds))
+      setTimerRunning(false)
+      return
+    }
+    const started = startStep(timer, now)
+    timerEndAtRef.current = started.endAt
+    setTimerRunning(true)
   }
 
   function resetTimer() {
     timerEndAtRef.current = null
     setTimerRunning(false)
-    setTimerRemaining(25 * 60)
-    localStorage.setItem(storage.timer, String(25 * 60))
+    setTimerRemaining(FOCUS_BLOCK_SECONDS)
+    localStorage.setItem(storage.timer, String(FOCUS_BLOCK_SECONDS))
   }
 
   const formatTimer = (seconds: number) => {
@@ -1899,7 +1789,7 @@ function App() {
                 <div className="focus-topline">
                   <span className="mono-label">FOCUS TIMER</span>
                   <span className={`timer-status ${timerRunning ? 'is-running' : ''}`} id="timerStatus">
-                    {timerRunning ? 'In focus' : timerRemaining < 25 * 60 ? 'Paused' : 'Ready'}
+                    {timerRunning ? 'In focus' : timerRemaining < FOCUS_BLOCK_SECONDS ? 'Paused' : 'Ready'}
                   </span>
                 </div>
                 <h3 id="focus-heading">Focus for 25 minutes.</h3>
@@ -1911,7 +1801,7 @@ function App() {
                 </p>
                 <div className="timer-controls">
                   <button className="button button-primary" id="timerToggle" type="button" onClick={toggleTimer}>
-                    {timerRunning ? 'Pause focus' : timerRemaining < 25 * 60 ? 'Resume focus' : 'Start focus'}
+                    {timerRunning ? 'Pause focus' : timerRemaining < FOCUS_BLOCK_SECONDS ? 'Resume focus' : 'Start focus'}
                   </button>
                   <button className="icon-button timer-reset" id="timerReset" type="button" aria-label="Reset focus timer" onClick={resetTimer}>
                     <X size={16} />
@@ -2912,7 +2802,7 @@ function App() {
                 <label>
                   <span>Stage</span>
                   <select value={applicationStatus} onChange={(event) => setApplicationStatus(event.target.value as ApplicationStatus)}>
-                    {statusOptions.map((status) => <option key={status}>{status}</option>)}
+                    {APPLICATION_STATUSES.map((status) => <option key={status}>{status}</option>)}
                   </select>
                 </label>
                 <label className="dispatch-form-next">
@@ -2936,7 +2826,7 @@ function App() {
                 <span>{pathApplications.length} opportunity{pathApplications.length === 1 ? '' : 'ies'}</span>
               </header>
               <div className="pipeline-tracks">
-                {statusOptions.map((status, statusIndex) => {
+                {APPLICATION_STATUSES.map((status, statusIndex) => {
                   const stageApplications = pathApplications.filter((application) => application.status === status)
                   return (
                     <section className={`pipeline-stage stage-${status.toLowerCase()}`} key={status}>
@@ -2961,7 +2851,7 @@ function App() {
                                 value={app.status}
                                 onChange={(event) => updateApplication(app.id, event.target.value as ApplicationStatus)}
                               >
-                                {statusOptions.map((option) => <option key={option}>{option}</option>)}
+                                {APPLICATION_STATUSES.map((option) => <option key={option}>{option}</option>)}
                               </select>
                               {app.url && (
                                 <a href={app.url} target="_blank" rel="noreferrer" aria-label={`Open ${app.company} posting`}>

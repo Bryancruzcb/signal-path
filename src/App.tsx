@@ -1644,34 +1644,39 @@ function App() {
                   <strong id="readinessScore">{String(readinessScore).padStart(2, '0')}</strong>
                   <small>/100</small>
                 </div>
-                <svg viewBox="0 0 520 190" role="img" aria-label="Route from course preparation to recruiting">
-                  <defs>
-                    <linearGradient id="signal-route-gradient" x1="0" x2="1">
-                      <stop offset="0" stopColor="var(--signal)" />
-                      <stop offset={`${readinessScore}%`} stopColor="var(--signal)" />
-                      <stop offset={`${readinessScore}%`} stopColor="var(--rail-muted)" />
-                      <stop offset="1" stopColor="var(--rail-muted)" />
-                    </linearGradient>
-                  </defs>
-                  <path className="routing-plot-grid" d="M16 48H504M16 104H504M16 160H504" />
-                  <path className="routing-plot-path" d="M24 150C92 150 94 62 174 62H284C354 62 354 126 424 126H496" />
-                  <g className="routing-plot-node is-current">
-                    <circle cx="24" cy="150" r="7" />
-                    <text x="24" y="178">NOW</text>
-                  </g>
-                  <g className="routing-plot-node">
-                    <circle cx="174" cy="62" r="7" />
-                    <text x="174" y="42">COURSES</text>
-                  </g>
-                  <g className="routing-plot-node">
-                    <circle cx="424" cy="126" r="7" />
-                    <text x="424" y="154">EVIDENCE</text>
-                  </g>
-                  <g className="routing-plot-node">
-                    <circle cx="496" cy="126" r="7" />
-                    <text x="496" y="106">APPLY</text>
-                  </g>
-                </svg>
+                <div className="routing-plot-map">
+                  <svg viewBox="0 0 520 190" role="img" aria-label="Route from course preparation to recruiting">
+                    <defs>
+                      <linearGradient id="signal-route-gradient" x1="0" x2="1">
+                        <stop offset="0" stopColor="var(--signal)" />
+                        <stop offset={`${readinessScore}%`} stopColor="var(--signal)" />
+                        <stop offset={`${readinessScore}%`} stopColor="var(--rail-muted)" />
+                        <stop offset="1" stopColor="var(--rail-muted)" />
+                      </linearGradient>
+                    </defs>
+                    <path className="routing-plot-grid" d="M16 48H504M16 104H504M16 160H504" />
+                    <path className="routing-plot-path" d="M24 150C92 150 94 62 174 62H284C354 62 354 126 424 126H496" />
+                    <g className="routing-plot-node is-current">
+                      <circle cx="24" cy="150" r="7" />
+                    </g>
+                    <g className="routing-plot-node">
+                      <circle cx="174" cy="62" r="7" />
+                    </g>
+                    <g className="routing-plot-node">
+                      <circle cx="424" cy="126" r="7" />
+                    </g>
+                    <g className="routing-plot-node">
+                      <circle cx="496" cy="126" r="7" />
+                    </g>
+                  </svg>
+                  {/* HTML labels over the chart stay 12px however small the chart is drawn. */}
+                  <div className="routing-plot-labels" aria-hidden="true">
+                    <span style={{ left: '4.62%', top: '93.68%' }}>NOW</span>
+                    <span style={{ left: '33.46%', top: '22.11%' }}>COURSES</span>
+                    <span style={{ left: '81.54%', top: '81.05%' }}>EVIDENCE</span>
+                    <span style={{ left: '95.38%', top: '55.79%' }}>APPLY</span>
+                  </div>
+                </div>
                 <p>
                   {weeklyCompleteCount + modulesCompleteCount === 0
                     ? 'Next step: finish one guided lab.'
@@ -1854,7 +1859,7 @@ function App() {
                             <button className="text-button" type="button" onClick={() => setOpenModuleId(module.id)} style={{ flex: '1', textAlign: 'left', fontWeight: '500' }}>
                               {module.title}
                             </button>
-                            <time style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--muted)' }}>
+                            <time style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--muted)' }}>
                               {module.duration.replace(" hours", "h").replace(" hour", "h")}
                             </time>
                           </li>
@@ -2435,13 +2440,13 @@ function App() {
                           {phase.index}
                         </span>
                         <div className="phase-title" style={{ flex: '1' }}>
-                          <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>{phase.window}</span>
+                          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>{phase.window}</span>
                           <h2 style={{ fontSize: '1.3rem', margin: '4px 0 0', fontWeight: '600' }}>{phase.title}</h2>
                           <p style={{ margin: '4px 0 0', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>{phase.purpose}</p>
                         </div>
                         <div className="phase-score" style={{ textAlign: 'right', flexShrink: '0' }}>
                           <strong style={{ display: 'block', fontSize: '1.1rem' }}>{phaseDone}/{phaseRequired.length}</strong>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>required</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>required</span>
                         </div>
                       </header>
 
@@ -2466,9 +2471,9 @@ function App() {
                                 {isComplete && <Check size={14} />}
                               </button>
                               <div className="roadmap-task-copy" style={{ flex: '1' }}>
-                                <div className="task-meta" style={{ display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
+                                <div className="task-meta" style={{ display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
                                   <span>{task.effort}</span>
-                                  {task.optional && <span className="optional-tag" style={{ color: 'var(--path-accent)', fontWeight: '600' }}>Optional</span>}
+                                  {task.optional && <span className="optional-tag" style={{ color: 'var(--path-accent-text)', fontWeight: '600' }}>Optional</span>}
                                 </div>
                                 <h3 style={{ fontSize: '1.05rem', margin: '4px 0 0', fontWeight: '600' }}>{task.title}</h3>
                                 <p style={{ margin: '4px 0 0', fontSize: '0.92rem', color: 'var(--ink-soft)' }}>{task.detail}</p>
@@ -2512,7 +2517,7 @@ function App() {
                     <article className={`project-card ${pIdx === 0 ? 'featured' : ''}`} key={project.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', padding: '28px' }}>
                       <header className="project-card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px' }}>
                         <div>
-                          <div className="project-labels" style={{ display: 'flex', gap: '8px', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', marginBottom: '8px' }}>
+                          <div className="project-labels" style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', marginBottom: '8px' }}>
                             <span>{project.label}</span>
                             <span>Project {pIdx + 1} of {projects.length}</span>
                           </div>
@@ -2521,7 +2526,7 @@ function App() {
                         </div>
                         <div className="project-score" style={{ textAlign: 'right' }}>
                           <strong style={{ fontSize: '1.4rem', display: 'block' }}>{percent}%</strong>
-                          <span style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>{done}/{project.milestones.length} milestones</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{done}/{project.milestones.length} milestones</span>
                         </div>
                       </header>
 
@@ -2534,7 +2539,7 @@ function App() {
                       <div className="decision-callout" style={{ display: 'flex', gap: '12px', background: 'var(--surface-muted)', padding: '16px', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}>
                         <Target size={20} style={{ color: 'var(--path-accent)', flexShrink: '0', marginTop: '2px' }} />
                         <div>
-                          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>WHAT THIS PROJECT SHOWS</span>
+                          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>WHAT THIS PROJECT SHOWS</span>
                           <p style={{ margin: '4px 0 0', fontSize: '0.94rem', fontWeight: '600', color: 'var(--ink)' }}>{project.decision}</p>
                         </div>
                       </div>
@@ -2595,7 +2600,7 @@ function App() {
 
                       <div className="resume-proof" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                         <div>
-                          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>RESUME BULLET POINT</span>
+                          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>RESUME BULLET POINT</span>
                           <p style={{ margin: '4px 0 0', fontStyle: 'italic', fontSize: '0.92rem', color: 'var(--ink)' }}>“{project.resumeLine}”</p>
                         </div>
                         <a href={project.datasetUrl} target="_blank" rel="noreferrer" className="button button-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem' }}>
@@ -2621,7 +2626,7 @@ function App() {
 
             <section className="resource-controls" aria-label="Filter resources" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '28px 0', padding: '16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>
               <label style={{ flex: '1', minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Search resources</span>
+                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Search resources</span>
                 <input
                   value={resourceQuery}
                   onChange={(event) => setResourceQuery(event.target.value)}
@@ -2630,13 +2635,13 @@ function App() {
                 />
               </label>
               <label style={{ minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Topic</span>
+                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Topic</span>
                 <select value={resourceCategory} onChange={(event) => setResourceCategory(event.target.value)} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>
                   {categories.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </label>
               <label style={{ minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Resource type</span>
+                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Resource type</span>
                 <select value={resourceKind} onChange={(event) => setResourceKind(event.target.value)} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>
                   {kinds.map((k) => <option key={k} value={k}>{k === 'Primary spine' ? 'Start here' : k}</option>)}
                 </select>
@@ -2690,7 +2695,7 @@ function App() {
                           <option value="complete">Complete</option>
                         </select>
                       </label>
-                      <small style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Verified {res.verified}</small>
+                      <small style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Verified {res.verified}</small>
                     </div>
                   </article>
                 )
@@ -3041,7 +3046,7 @@ function App() {
                     <h3 style={{ fontSize: '1.1rem', margin: '0', fontWeight: '600' }}>{source.title}</h3>
                     <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: 'var(--ink-soft)' }}>{source.description}</p>
                   </div>
-                  <span className="source-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--muted)', minWidth: '120px', textAlign: 'right' }}>
+                  <span className="source-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--muted)', minWidth: '120px', textAlign: 'right' }}>
                     {source.meta}
                   </span>
                   <a className="source-link" href={source.url} target="_blank" rel="noreferrer" aria-label={`Open ${source.title}`}>

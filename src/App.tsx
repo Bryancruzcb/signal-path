@@ -95,7 +95,6 @@ type WorkspaceRoute = {
   code: string
   label: string
   shortLabel: string
-  context: string
   title: string
   group: 'Prepare' | 'Choose' | 'Launch'
 }
@@ -106,7 +105,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '01',
     label: 'This week',
     shortLabel: 'Week',
-    context: 'Summer preparation / 2026',
     title: 'This week',
     group: 'Prepare',
   },
@@ -115,7 +113,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '02',
     label: 'Course prep',
     shortLabel: 'Courses',
-    context: 'Enrolled · Fall 2026 / CS 149 + CS 158A',
     title: 'Course prep',
     group: 'Prepare',
   },
@@ -124,7 +121,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '03',
     label: 'Academic plan',
     shortLabel: 'Plan',
-    context: 'Four semesters / one clear plan',
     title: 'Academic plan',
     group: 'Prepare',
   },
@@ -133,7 +129,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '04',
     label: 'Campus resources',
     shortLabel: 'Campus',
-    context: 'SJSU / official resources',
     title: 'Campus resources',
     group: 'Choose',
   },
@@ -142,7 +137,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '05',
     label: 'Career paths',
     shortLabel: 'Paths',
-    context: 'Six career options / compare the work',
     title: 'Career paths',
     group: 'Choose',
   },
@@ -151,7 +145,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '06',
     label: 'Career resources',
     shortLabel: 'Library',
-    context: 'Learning resources / start with the basics',
     title: 'Learning resources',
     group: 'Choose',
   },
@@ -160,7 +153,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '07',
     label: 'Applications',
     shortLabel: 'Apply',
-    context: 'Summer 2027 / application timeline',
     title: 'Applications',
     group: 'Launch',
   },
@@ -169,7 +161,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '08',
     label: 'Sources',
     shortLabel: 'Sources',
-    context: 'Sources / where the information came from',
     title: 'Sources',
     group: 'Launch',
   },
@@ -320,9 +311,9 @@ function ViewIntro({
   description,
   action,
 }: {
-  eyebrow: string
+  eyebrow?: string
   title: string
-  description: string
+  description?: string
   action?: React.ReactNode
 }) {
   return (
@@ -332,9 +323,9 @@ function ViewIntro({
         <i />
       </div>
       <div className="route-intro-copy">
-        <p className="route-kicker">{eyebrow}</p>
+        {eyebrow && <p className="route-kicker">{eyebrow}</p>}
         <h2>{title}</h2>
-        <p>{description}</p>
+        {description && <p>{description}</p>}
       </div>
       {action && <div className="route-intro-action">{action}</div>}
     </header>
@@ -1504,11 +1495,6 @@ function App() {
           <div className="progress-track" aria-hidden="true">
             <span style={{ width: `${Math.round((sjsuProgressPercent + careerProgressPercent) / 2)}%` }}></span>
           </div>
-          <p id="sidebarProgressNote">
-            {readinessScore > 30
-              ? `${modulesCompleteCount} modules & ${completedRequired} career steps checked. Nice pace.`
-              : "Start with one small lab or career task. Small steps add up."}
-          </p>
         </section>
 
         <div className="sidebar-footer">
@@ -1585,7 +1571,6 @@ function App() {
             <div className="topbar-route">
               <span className="topbar-route-code">{activeRoute.code} / 08</span>
               <div>
-                <span className="topbar-context">{activeRoute.context}</span>
                 <h1 id="viewTitle">
                   {activeView === 'career-paths' ? `${profile.shortName} path` : activeRoute.title}
                 </h1>
@@ -1619,15 +1604,12 @@ function App() {
             <header className="dashboard-intro routing-hero">
               <div className="routing-hero-copy">
                 <p className="route-kicker" id="todayLabel">
-                  01 / THIS WEEK · {new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}
+                  {new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}
                 </p>
                 <h2>
                   Keep going
                   <span>through this semester.</span>
                 </h2>
-                <p>
-                  CS 149 and CS 158A are enrolled for Fall 2026. Practice processes, networks, and the skills you will need for Summer 2027 internships.
-                </p>
                 <div className="dashboard-actions">
                   <button className="button button-primary button-large" type="button" onClick={() => navigate('courses')}>
                     Open course prep <ChevronRight size={16} />
@@ -1690,11 +1672,11 @@ function App() {
               <button type="button" className="signal-meter" onClick={() => document.querySelector('.focus-bench')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
                 <span className="mono-label">STUDY BANKED</span>
                 <strong>{(studyMinutes / 60).toFixed(1)}<small> / {Math.round(totalPlannedMinutes / 60)} h planned</small></strong>
-                <span className="signal-meter-note">
-                  {studyMinutes === 0
-                    ? 'Finish a focus block, weekly task, or lab to start the log'
-                    : `${focusLog.sessions} focus block${focusLog.sessions === 1 ? '' : 's'} + ${totalCodexComplete} finished item${totalCodexComplete === 1 ? '' : 's'}`}
-                </span>
+                {studyMinutes > 0 && (
+                  <span className="signal-meter-note">
+                    {`${focusLog.sessions} focus block${focusLog.sessions === 1 ? '' : 's'} + ${totalCodexComplete} finished item${totalCodexComplete === 1 ? '' : 's'}`}
+                  </span>
+                )}
                 <span className="signal-meter-action">Start a focus block <ChevronRight size={14} /></span>
               </button>
               <button type="button" className="signal-meter" onClick={() => navigate('academic-plan')}>
@@ -1716,7 +1698,7 @@ function App() {
                   : <strong>{daysUntil(INTERNSHIP_APPS_OPEN)}<small> days</small></strong>}
                 <span className="signal-meter-note">
                   {countdownReached(INTERNSHIP_APPS_OPEN)
-                    ? 'Applications open — go apply'
+                    ? 'Applications open'
                     : 'Estimated early August — check each company for exact dates'}
                 </span>
                 <span className="signal-meter-action">Track applications <ChevronRight size={14} /></span>
@@ -1801,9 +1783,6 @@ function App() {
                 <div className="timer" id="timerDisplay">
                   {formatTimer(timerRemaining)}
                 </div>
-                <p id="timerPrompt" className="timer-prompt">
-                  Close extra tabs, finish one small task, and write down what you learned.
-                </p>
                 <div className="timer-controls">
                   <button className="button button-primary" id="timerToggle" type="button" onClick={toggleTimer}>
                     {timerRunning ? 'Pause focus' : timerRemaining < FOCUS_BLOCK_SECONDS ? 'Resume focus' : 'Start focus'}
@@ -1816,7 +1795,6 @@ function App() {
                   <span>{focusLog.sessions}</span>
                   focus block{focusLog.sessions === 1 ? '' : 's'} banked
                 </div>
-                <blockquote>“Mastery is being able to predict what happens next.”</blockquote>
               </aside>
             </div>
 
@@ -1824,7 +1802,6 @@ function App() {
             <section className="course-readiness" aria-labelledby="course-readiness-heading" style={{ marginTop: '48px' }}>
               <div className="section-heading-row course-readiness-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div>
-                  <p className="mono-label">TWO SYSTEMS, ONE FOUNDATION</p>
                   <h3 id="course-readiness-heading" style={{ fontSize: '1.6rem', margin: '0' }}>Course readiness</h3>
                 </div>
                 <button className="text-button arrow-link" type="button" onClick={() => navigate('courses')}>
@@ -1915,9 +1892,7 @@ function App() {
 
             {/* Bottom Lab Note */}
             <section className="lab-note" aria-labelledby="lab-note-heading" style={{ marginTop: '48px' }}>
-              <div className="lab-note-index" aria-hidden="true">NOTE<br />07.14</div>
               <div>
-                <p className="mono-label">WHY THIS MATTERS FOR DATA SCIENCE</p>
                 <h3 id="lab-note-heading">Data science also needs systems skills.</h3>
                 <p>
                   Operating systems explain why parallel jobs slow down, memory use grows, and files become bottlenecks. Networks explain how data reaches an API, a cluster, or cloud storage. These courses support real data work.
@@ -1934,9 +1909,8 @@ function App() {
         {activeView === 'courses' && (
           <section className="view is-active" id="view-courses">
             <ViewIntro
-              eyebrow="02 / COURSE PREP"
               title="Practice the core ideas this semester."
-              description="Each module gives you something to run, inspect, or explain. Assignments may change by instructor, but the core ideas stay useful."
+              description="Assignments may change by instructor, but the core ideas stay useful."
               action={
                 <div className="course-selector" role="group" aria-label="Choose a course">
                   <button
@@ -2060,7 +2034,6 @@ function App() {
         {activeView === 'academic-plan' && (
           <section className="view is-active" id="view-roadmap">
             <ViewIntro
-              eyebrow="03 / ACADEMIC PLAN"
               title="Finish required courses. Choose useful electives."
               description="This is a planning guide, not an official degree audit. Mark finished courses, then check MyProgress and talk with a CS advisor."
               action={
@@ -2273,9 +2246,7 @@ function App() {
         {activeView === 'campus-resources' && (
           <section className="view is-active" id="view-campus">
             <ViewIntro
-              eyebrow="04 / CAMPUS RESOURCES"
               title="Check official SJSU sources first."
-              description="Find degree requirements, advising, department information, and career resources in one place."
             />
 
             <div className="campus-sjsu-view" style={{ display: 'grid', gap: '32px' }}>
@@ -2390,7 +2361,6 @@ function App() {
             </nav>
 
             <ViewIntro
-              eyebrow={profile.eyebrow}
               title={profile.name}
               description={profile.summary}
               action={
@@ -2725,9 +2695,7 @@ function App() {
         {activeView === 'outreach-applications' && (
           <section className="view is-active applications-route" id="view-applications">
             <ViewIntro
-              eyebrow="07 / APPLICATIONS"
               title="Keep every application moving."
-              description="Save Summer 2027 openings, choose the next step, and track each application from start to finish."
             />
 
             <section className="recruitment-calendar" aria-labelledby="recruitment-window-title">
@@ -2934,7 +2902,6 @@ function App() {
         {activeView === 'evidence-shelf' && (
           <section className="view is-active" id="view-sources">
             <ViewIntro
-              eyebrow="08 / SOURCES"
               title="Know where the information comes from."
               description="Course details and student benefits can change. Each item shows its source, so you can separate official information, class syllabi, student opinions, and study suggestions."
               action={

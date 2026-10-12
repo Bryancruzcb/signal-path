@@ -707,20 +707,6 @@ textarea:focus-visible {
   white-space: nowrap;
 }
 
-.topbar-context {
-  display: block;
-  overflow: hidden;
-  max-width: 54vw;
-  margin-bottom: 2px;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
 .topbar h1 {
   margin: 0;
   font-size: 1.05rem;
@@ -1766,11 +1752,6 @@ textarea:focus-visible {
   line-height: 0.95;
 }
 
-.timer-prompt {
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 0.84rem;
-}
-
 .timer-controls {
   display: flex;
   margin-top: 18px;
@@ -1791,16 +1772,6 @@ textarea:focus-visible {
 
 .focus-session-summary span {
   color: var(--mint);
-}
-
-.focus-bench blockquote {
-  margin: auto 0 0;
-  padding-top: 26px;
-  color: rgba(255, 255, 255, 0.52);
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  font-family: var(--font-serif);
-  font-size: 1rem;
-  font-style: italic;
 }
 
 .app-shell.is-focusing .app-main::after {
@@ -1966,15 +1937,9 @@ textarea:focus-visible {
   padding: 24px 0;
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-strong);
-  grid-template-columns: 88px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 28px;
-}
-
-.lab-note-index {
-  color: var(--signal-text);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
 }
 
 .lab-note h3 {
@@ -4817,7 +4782,6 @@ textarea:focus-visible {
   }
 
   .topbar-route-code,
-  .topbar-context,
   .topbar-save-state,
   .certainty-button,
   .profile-chip small {
@@ -4950,7 +4914,7 @@ textarea:focus-visible {
 
   .lab-note {
     display: grid;
-    grid-template-columns: 58px 1fr;
+    grid-template-columns: 1fr;
   }
 
   .lab-note .button {

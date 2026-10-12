@@ -1,7 +1,7 @@
 :root {
   --ink: #17191d;
   --ink-soft: #4f545b;
-  --muted: #747981;
+  --muted: #61656d;
   --paper: #f2f0e9;
   --paper-bright: #fbfaf6;
   --paper-deep: #e8e5dc;
@@ -11,11 +11,13 @@
   --line: rgba(23, 25, 29, 0.18);
   --line-strong: rgba(23, 25, 29, 0.36);
   --signal: #f05232;
+  --signal-text: #cd2e07;
+  --signal-button: #d83a18;
   --signal-deep: #a92d19;
   --signal-soft: #ffd9cf;
   --mint: #91e8c4;
   --mint-deep: #176447;
-  --network: #3c6ff2;
+  --network: #3a6cef;
   --warning: #d5992b;
   --surface: var(--paper-bright);
   --surface-muted: var(--paper-deep);
@@ -108,6 +110,8 @@ textarea:focus-visible {
 
 .app-shell {
   --sidebar-width: 244px;
+  /* Path accents are tuned for fills and icons; text in an accent color is darkened (same hue) to reach 4.5:1. */
+  --path-accent-text: color-mix(in oklch, var(--path-accent) 80%, black);
   --sidebar-offset: var(--sidebar-width);
   min-height: 100vh;
   background: var(--paper);
@@ -203,7 +207,7 @@ textarea:focus-visible {
 .brand-copy span {
   color: rgba(255, 255, 255, 0.54);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -282,9 +286,9 @@ textarea:focus-visible {
 
 .nav-group-label {
   margin: 14px 0 6px 43px;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -370,9 +374,9 @@ textarea:focus-visible {
 }
 
 .route-station-code {
-  color: rgba(255, 255, 255, 0.34);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
 }
 
 .route-station.is-active .route-station-code {
@@ -407,9 +411,9 @@ textarea:focus-visible {
 .sidebar-footer-label {
   display: block;
   margin-bottom: 10px;
-  color: rgba(255, 255, 255, 0.34);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   letter-spacing: 0.16em;
 }
 
@@ -436,9 +440,9 @@ textarea:focus-visible {
 .sidebar-meter span {
   display: block;
   overflow: hidden;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.51rem;
+  font-size: 0.75rem;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -454,8 +458,8 @@ textarea:focus-visible {
 }
 
 .sidebar-meter em {
-  color: rgba(255, 255, 255, 0.38);
-  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
   font-style: normal;
 }
 
@@ -471,7 +475,7 @@ textarea:focus-visible {
   align-items: center;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
@@ -499,8 +503,8 @@ textarea:focus-visible {
 
 .sidebar-progress p {
   margin: 10px 0 0;
-  color: rgba(255, 255, 255, 0.38);
-  font-size: 0.67rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
@@ -513,9 +517,9 @@ textarea:focus-visible {
 .save-indicator {
   display: flex;
   margin-bottom: 5px;
-  color: rgba(255, 255, 255, 0.48);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   align-items: center;
   gap: 7px;
 }
@@ -532,7 +536,7 @@ textarea:focus-visible {
 .sidebar-footer .text-button {
   justify-content: flex-start;
   color: rgba(255, 255, 255, 0.55);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .sidebar-footer .text-button:hover {
@@ -545,7 +549,7 @@ textarea:focus-visible {
 
 .sidebar-footer .danger.armed {
   color: #fff;
-  background: var(--signal);
+  background: var(--signal-button);
 }
 
 .app-main {
@@ -635,7 +639,7 @@ textarea:focus-visible {
 }
 
 .app-shell.is-sidebar-collapsed .route-station-code {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
 }
 
 .app-shell.is-sidebar-collapsed .rail-readout {
@@ -696,24 +700,10 @@ textarea:focus-visible {
 }
 
 .topbar-route-code {
-  color: var(--signal);
+  color: var(--signal-text);
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
-  white-space: nowrap;
-}
-
-.topbar-context {
-  display: block;
-  overflow: hidden;
-  max-width: 54vw;
-  margin-bottom: 2px;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -750,7 +740,7 @@ textarea:focus-visible {
   border-right: 1px solid var(--line);
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -781,7 +771,7 @@ textarea:focus-visible {
   background: transparent;
   place-items: center;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   transition: color 140ms ease, background 140ms ease;
@@ -808,7 +798,7 @@ textarea:focus-visible {
   display: flex;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   align-items: center;
   gap: 8px;
   text-transform: uppercase;
@@ -829,7 +819,7 @@ textarea:focus-visible {
 .career-device-note > span {
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -880,14 +870,14 @@ textarea:focus-visible {
 
 .profile-chip span {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
 .profile-chip small {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.52rem;
+  font-size: 0.75rem;
 }
 
 .mobile-menu-button {
@@ -1027,7 +1017,7 @@ textarea:focus-visible {
   margin: 0 0 10px;
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   line-height: 1.4;
@@ -1080,8 +1070,8 @@ textarea:focus-visible {
 
 .button-primary {
   color: #fff;
-  background: var(--signal);
-  border-color: var(--signal);
+  background: var(--signal-button);
+  border-color: var(--signal-button);
   clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
 }
 
@@ -1125,7 +1115,7 @@ textarea:focus-visible {
 }
 
 .text-button:hover {
-  color: var(--signal);
+  color: var(--signal-text);
 }
 
 .icon-button {
@@ -1164,7 +1154,7 @@ textarea:focus-visible {
   border-radius: 0;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -1245,7 +1235,8 @@ textarea:focus-visible {
 
 .routing-hero-copy h2 span {
   display: block;
-  color: transparent;
+  color: var(--ink);
+  -webkit-text-fill-color: transparent;
   -webkit-text-stroke: 1.2px var(--ink);
 }
 
@@ -1296,9 +1287,9 @@ textarea:focus-visible {
 
 .routing-plot-score span {
   margin-right: auto;
-  color: rgba(255, 255, 255, 0.46);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   letter-spacing: 0.1em;
 }
 
@@ -1311,17 +1302,20 @@ textarea:focus-visible {
 }
 
 .routing-plot-score small {
-  color: rgba(255, 255, 255, 0.34);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+}
+
+.routing-plot-map {
+  position: relative;
+  z-index: 2;
+  margin: 14px 0 2px;
 }
 
 .routing-plot svg {
-  position: relative;
-  z-index: 2;
   width: 100%;
   height: auto;
-  margin: 14px 0 2px;
   overflow: visible;
 }
 
@@ -1350,12 +1344,16 @@ textarea:focus-visible {
   filter: drop-shadow(0 0 6px rgba(240, 82, 50, 0.7));
 }
 
-.routing-plot-node text {
-  fill: rgba(255, 255, 255, 0.5);
+.routing-plot-labels span {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
-  text-anchor: middle;
+  line-height: 1;
+  white-space: nowrap;
+  /* Centre on the node's x and sit the baseline on its y, as the SVG text did. */
+  transform: translate(-50%, -87.5%);
 }
 
 .routing-plot > p {
@@ -1364,7 +1362,7 @@ textarea:focus-visible {
   margin: 6px 0 0;
   color: rgba(255, 255, 255, 0.52);
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
 }
 
 .signal-meters {
@@ -1432,7 +1430,7 @@ textarea:focus-visible {
 
 .signal-meter strong small {
   color: var(--muted);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 400;
 }
 
@@ -1453,7 +1451,7 @@ textarea:focus-visible {
   padding-top: 14px;
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   align-items: center;
   gap: 5px;
   text-transform: uppercase;
@@ -1513,7 +1511,7 @@ textarea:focus-visible {
 .plan-count {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   text-align: right;
   text-transform: uppercase;
 }
@@ -1639,7 +1637,7 @@ textarea:focus-visible {
   padding-right: 13px;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.59rem;
+  font-size: 0.75rem;
   align-items: center;
   gap: 14px;
 }
@@ -1724,13 +1722,13 @@ textarea:focus-visible {
 }
 
 .focus-bench .mono-label {
-  color: rgba(255, 255, 255, 0.44);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .timer-status {
   color: var(--mint);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
@@ -1754,11 +1752,6 @@ textarea:focus-visible {
   line-height: 0.95;
 }
 
-.timer-prompt {
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 0.84rem;
-}
-
 .timer-controls {
   display: flex;
   margin-top: 18px;
@@ -1771,24 +1764,14 @@ textarea:focus-visible {
 
 .focus-session-summary {
   margin-top: 22px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
 .focus-session-summary span {
   color: var(--mint);
-}
-
-.focus-bench blockquote {
-  margin: auto 0 0;
-  padding-top: 26px;
-  color: rgba(255, 255, 255, 0.52);
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  font-family: var(--font-serif);
-  font-size: 1rem;
-  font-style: italic;
 }
 
 .app-shell.is-focusing .app-main::after {
@@ -1853,7 +1836,7 @@ textarea:focus-visible {
 .course-code {
   display: inline-flex;
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.75rem;
   align-items: center;
   gap: 8px;
 }
@@ -1890,7 +1873,7 @@ textarea:focus-visible {
 
 .readiness-meter strong {
   font-family: var(--font-mono);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
 }
 
 .mini-module-list {
@@ -1954,15 +1937,9 @@ textarea:focus-visible {
   padding: 24px 0;
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-strong);
-  grid-template-columns: 88px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 28px;
-}
-
-.lab-note-index {
-  color: var(--signal);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
 }
 
 .lab-note h3 {
@@ -2009,7 +1986,7 @@ textarea:focus-visible {
   display: block;
   margin-bottom: 4px;
   color: var(--muted);
-  font-size: 0.5rem;
+  font-size: 0.75rem;
   letter-spacing: 0.1em;
 }
 
@@ -2046,7 +2023,7 @@ textarea:focus-visible {
   margin-bottom: 11px;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
 }
 
@@ -2094,7 +2071,7 @@ textarea:focus-visible {
   grid-template-columns: 72px 1fr auto;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -2123,7 +2100,7 @@ textarea:focus-visible {
   padding-left: 18px;
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .module-row:is(:hover, :focus-within) .module-number {
@@ -2201,7 +2178,7 @@ textarea:focus-visible {
   margin-bottom: 8px;
   color: #865a11;
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   letter-spacing: 0.1em;
 }
 
@@ -2213,7 +2190,7 @@ textarea:focus-visible {
 .adviser-note p {
   margin: 5px 0 0;
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .known-courses {
@@ -2256,7 +2233,7 @@ textarea:focus-visible {
   border: 1px solid var(--line-strong);
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   cursor: pointer;
 }
 
@@ -2311,7 +2288,7 @@ textarea:focus-visible {
 
 .term-label {
   display: flex;
-  padding: 26px 18px;
+  padding: 26px 12px;
   flex-direction: column;
   gap: 5px;
 }
@@ -2319,7 +2296,7 @@ textarea:focus-visible {
 .term-label {
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.63rem;
+  font-size: 0.75rem;
 }
 
 .term-label > strong {
@@ -2333,7 +2310,7 @@ textarea:focus-visible {
   margin-top: auto;
   padding-top: 14px;
   color: var(--muted);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   line-height: 1.35;
 }
 
@@ -2416,7 +2393,7 @@ textarea:focus-visible {
   color: var(--mint-deep);
   border: 1px solid var(--line-strong);
   place-items: center;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .roadmap-course.is-done .roadmap-course-check {
@@ -2435,26 +2412,26 @@ textarea:focus-visible {
   color: var(--signal-deep);
   place-items: center;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   text-decoration: none;
 }
 
 .roadmap-course-link:hover {
-  color: var(--signal);
+  color: var(--signal-text);
   background: var(--signal-soft);
 }
 
 .roadmap-course p {
   margin: 8px 0 0;
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .term-note {
   padding: 26px 20px;
   color: var(--ink-soft);
   border-left: 1px solid var(--line);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .roadmap-footer-note,
@@ -2509,7 +2486,7 @@ textarea:focus-visible {
   margin-top: auto;
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
 }
 
 .project-stages {
@@ -2530,7 +2507,7 @@ textarea:focus-visible {
   background: transparent;
   border: 0;
   border-right: 1px solid var(--line);
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 80px minmax(0, 1fr);
   align-content: start;
   gap: 16px;
 }
@@ -2547,7 +2524,7 @@ textarea:focus-visible {
   padding-top: 3px;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -2577,7 +2554,7 @@ textarea:focus-visible {
 .elective-table-wrap th {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -2683,7 +2660,7 @@ textarea:focus-visible {
   border-radius: 0 !important;
   align-items: center;
   gap: 8px !important;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .path-tab:last-child {
@@ -2824,7 +2801,7 @@ textarea:focus-visible {
   display: block;
   margin-top: 4px;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .career-flagship-projects {
@@ -2892,7 +2869,7 @@ textarea:focus-visible {
 }
 
 .resource-controls label > span {
-  color: rgba(255, 255, 255, 0.42) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .resource-controls input,
@@ -2937,6 +2914,9 @@ textarea:focus-visible {
 
 .resource-evidence {
   grid-area: evidence;
+  /* Two 12px pills do not fit side by side in the narrow column; let the second drop below. */
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .resource-summary {
@@ -3074,14 +3054,14 @@ textarea:focus-visible {
 
 .date-rail-stop strong {
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.75rem;
 }
 
 .date-rail-stop small {
   margin-top: 4px;
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.46rem;
+  font-size: 0.75rem;
   letter-spacing: 0.06em;
 }
 
@@ -3104,12 +3084,12 @@ textarea:focus-visible {
 .track-section-heading > span:last-child {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
 .track-section-index {
-  color: var(--signal);
+  color: var(--signal-text);
   font-family: var(--font-mono);
   font-size: 1.25rem;
   font-weight: 300;
@@ -3167,10 +3147,10 @@ textarea:focus-visible {
   width: 21px;
   height: 21px;
   color: #fff;
-  background: var(--signal);
+  background: var(--signal-button);
   place-items: center;
   font-family: var(--font-mono);
-  font-size: 0.48rem;
+  font-size: 0.75rem;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
@@ -3181,7 +3161,7 @@ textarea:focus-visible {
 .posting-ticket-copy small {
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
@@ -3208,7 +3188,7 @@ textarea:focus-visible {
   margin-top: 7px;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.52rem;
+  font-size: 0.75rem;
   font-style: normal;
 }
 
@@ -3232,7 +3212,7 @@ textarea:focus-visible {
 .dispatch-form label > span {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.52rem;
+  font-size: 0.75rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -3260,7 +3240,7 @@ textarea:focus-visible {
   min-height: 86px;
   padding: 14px 20px;
   color: #fff;
-  background: var(--signal);
+  background: var(--signal-button);
   border: 0;
   border-top: 1px solid var(--signal-deep);
   align-items: center;
@@ -3305,12 +3285,12 @@ textarea:focus-visible {
 .pipeline-stage > header em {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   font-style: normal;
 }
 
 .pipeline-stage > header strong {
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
@@ -3378,14 +3358,14 @@ textarea:focus-visible {
 .application-ticket-id span {
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .application-ticket-id time {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.48rem;
+  font-size: 0.75rem;
 }
 
 .application-ticket h4 {
@@ -3398,7 +3378,7 @@ textarea:focus-visible {
   min-height: 32px;
   margin: 5px 0 12px;
   color: var(--ink-soft);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
 }
 
 .application-ticket-actions {
@@ -3414,7 +3394,7 @@ textarea:focus-visible {
   background: transparent;
   border: 1px solid var(--line);
   border-radius: 0;
-  font-size: 0.6rem;
+  font-size: 0.75rem;
 }
 
 .application-ticket-actions a,
@@ -3434,7 +3414,7 @@ textarea:focus-visible {
   padding: 13px 3px;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.52rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
@@ -3483,9 +3463,9 @@ textarea:focus-visible {
 }
 
 .role-destinations li span {
-  color: var(--signal);
+  color: var(--signal-text);
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
 }
 
 .role-destinations li strong {
@@ -3523,7 +3503,7 @@ textarea:focus-visible {
   background: var(--ink);
   place-items: center;
   font-family: var(--font-mono);
-  font-size: 0.5rem;
+  font-size: 0.75rem;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
@@ -3540,13 +3520,13 @@ textarea:focus-visible {
 .calibration-note > p {
   margin: 3px 0;
   color: var(--ink-soft);
-  font-size: 0.69rem;
+  font-size: 0.75rem;
 }
 
 .cadence-loop small {
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.5rem;
+  font-size: 0.75rem;
 }
 
 .calibration-note blockquote {
@@ -3574,7 +3554,7 @@ textarea:focus-visible {
   display: block;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.54rem;
+  font-size: 0.75rem;
 }
 
 .source-updated strong {
@@ -3626,7 +3606,7 @@ textarea:focus-visible {
   color: var(--mint);
   border: 1px solid rgba(145, 232, 196, 0.45);
   font-family: var(--font-mono);
-  font-size: 0.63rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   align-items: center;
   gap: 7px;
@@ -3660,9 +3640,9 @@ textarea:focus-visible {
 }
 
 .student-pack-actions > span {
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
-  font-size: 0.53rem;
+  font-size: 0.75rem;
   text-align: right;
   text-transform: uppercase;
 }
@@ -3716,7 +3696,7 @@ textarea:focus-visible {
   display: block;
   margin-top: 7px;
   color: rgba(255, 255, 255, 0.55);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -3732,10 +3712,10 @@ textarea:focus-visible {
 .student-pack-note {
   margin: 0;
   padding: 14px 28px;
-  color: rgba(255, 255, 255, 0.46);
+  color: rgba(255, 255, 255, 0.5);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   font-family: var(--font-mono);
-  font-size: 0.54rem;
+  font-size: 0.75rem;
   line-height: 1.55;
 }
 
@@ -3783,7 +3763,7 @@ textarea:focus-visible {
   border-right: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0;
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -3791,7 +3771,7 @@ textarea:focus-visible {
 .source-filter:hover,
 .source-filter.is-active {
   color: #fff;
-  background: var(--signal);
+  background: var(--signal-button);
 }
 
 .source-list {
@@ -3837,7 +3817,7 @@ textarea:focus-visible {
 .source-meta {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.75rem;
 }
 
 .source-link {
@@ -3990,7 +3970,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
-  font-size: 0.57rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
@@ -4013,7 +3993,7 @@ textarea:focus-visible {
   color: var(--signal-deep);
   background: var(--paper-bright);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -4045,7 +4025,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 7px;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -4112,7 +4092,7 @@ textarea:focus-visible {
 .device-guide-code {
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -4134,7 +4114,7 @@ textarea:focus-visible {
   margin-top: 1px;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.75rem;
 }
 
 .device-guide-option input:checked + .device-guide-option-surface small {
@@ -4161,7 +4141,7 @@ textarea:focus-visible {
 .device-guide-environment > span {
   color: var(--signal-deep);
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4187,8 +4167,8 @@ textarea:focus-visible {
 
 .weekly-guide-close:hover {
   color: var(--ink);
-  background: var(--signal);
-  border-color: var(--signal);
+  background: var(--signal-button);
+  border-color: var(--signal-button);
 }
 
 .weekly-guide-body,
@@ -4263,10 +4243,10 @@ textarea:focus-visible {
   width: 30px;
   height: 30px;
   color: #fff;
-  background: var(--signal);
+  background: var(--signal-button);
   place-items: center;
   font-family: var(--font-mono);
-  font-size: 0.57rem;
+  font-size: 0.75rem;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
@@ -4286,7 +4266,7 @@ textarea:focus-visible {
   border: 0;
   border-radius: 0;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .weekly-guide-resources {
@@ -4318,7 +4298,7 @@ textarea:focus-visible {
 
 .weekly-guide-resource small {
   color: var(--muted);
-  font-size: 0.67rem;
+  font-size: 0.75rem;
 }
 
 .weekly-guide-chat {
@@ -4399,8 +4379,8 @@ textarea:focus-visible {
 
 .module-dialog-shell .dialog-header .icon-button:hover {
   color: var(--ink);
-  background: var(--signal);
-  border-color: var(--signal);
+  background: var(--signal-button);
+  border-color: var(--signal-button);
 }
 
 .module-dialog-shell .dialog-body {
@@ -4802,7 +4782,6 @@ textarea:focus-visible {
   }
 
   .topbar-route-code,
-  .topbar-context,
   .topbar-save-state,
   .certainty-button,
   .profile-chip small {
@@ -4935,7 +4914,7 @@ textarea:focus-visible {
 
   .lab-note {
     display: grid;
-    grid-template-columns: 58px 1fr;
+    grid-template-columns: 1fr;
   }
 
   .lab-note .button {
@@ -5198,10 +5177,6 @@ textarea:focus-visible {
     font-size: 2.8rem;
   }
 
-  .routing-plot-node text {
-    font-size: 7px;
-  }
-
   .weekly-heading-row {
     align-items: start;
     flex-direction: column;
@@ -5260,10 +5235,20 @@ textarea:focus-visible {
 
   .source-row {
     grid-template-columns: 1fr 44px;
+    flex-wrap: wrap;
   }
 
   .source-row > .evidence-pill {
     grid-column: 1 / -1;
+  }
+
+  /* The rows are flex (inline style), so put the label on its own line above the text and link. */
+  .source-row > div {
+    min-width: calc(100% - 60px);
+  }
+
+  .course-readiness-header {
+    flex-wrap: wrap;
   }
 }
 

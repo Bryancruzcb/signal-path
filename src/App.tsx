@@ -95,7 +95,6 @@ type WorkspaceRoute = {
   code: string
   label: string
   shortLabel: string
-  context: string
   title: string
   group: 'Prepare' | 'Choose' | 'Launch'
 }
@@ -106,7 +105,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '01',
     label: 'This week',
     shortLabel: 'Week',
-    context: 'Summer preparation / 2026',
     title: 'This week',
     group: 'Prepare',
   },
@@ -115,7 +113,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '02',
     label: 'Course prep',
     shortLabel: 'Courses',
-    context: 'Enrolled · Fall 2026 / CS 149 + CS 158A',
     title: 'Course prep',
     group: 'Prepare',
   },
@@ -124,7 +121,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '03',
     label: 'Academic plan',
     shortLabel: 'Plan',
-    context: 'Four semesters / one clear plan',
     title: 'Academic plan',
     group: 'Prepare',
   },
@@ -133,7 +129,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '04',
     label: 'Campus resources',
     shortLabel: 'Campus',
-    context: 'SJSU / official resources',
     title: 'Campus resources',
     group: 'Choose',
   },
@@ -142,7 +137,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '05',
     label: 'Career paths',
     shortLabel: 'Paths',
-    context: 'Six career options / compare the work',
     title: 'Career paths',
     group: 'Choose',
   },
@@ -151,7 +145,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '06',
     label: 'Career resources',
     shortLabel: 'Library',
-    context: 'Learning resources / start with the basics',
     title: 'Learning resources',
     group: 'Choose',
   },
@@ -160,7 +153,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '07',
     label: 'Applications',
     shortLabel: 'Apply',
-    context: 'Summer 2027 / application timeline',
     title: 'Applications',
     group: 'Launch',
   },
@@ -169,7 +161,6 @@ const workspaceRoutes: WorkspaceRoute[] = [
     code: '08',
     label: 'Sources',
     shortLabel: 'Sources',
-    context: 'Sources / where the information came from',
     title: 'Sources',
     group: 'Launch',
   },
@@ -320,9 +311,9 @@ function ViewIntro({
   description,
   action,
 }: {
-  eyebrow: string
+  eyebrow?: string
   title: string
-  description: string
+  description?: string
   action?: React.ReactNode
 }) {
   return (
@@ -332,9 +323,9 @@ function ViewIntro({
         <i />
       </div>
       <div className="route-intro-copy">
-        <p className="route-kicker">{eyebrow}</p>
+        {eyebrow && <p className="route-kicker">{eyebrow}</p>}
         <h2>{title}</h2>
-        <p>{description}</p>
+        {description && <p>{description}</p>}
       </div>
       {action && <div className="route-intro-action">{action}</div>}
     </header>
@@ -1504,11 +1495,6 @@ function App() {
           <div className="progress-track" aria-hidden="true">
             <span style={{ width: `${Math.round((sjsuProgressPercent + careerProgressPercent) / 2)}%` }}></span>
           </div>
-          <p id="sidebarProgressNote">
-            {readinessScore > 30
-              ? `${modulesCompleteCount} modules & ${completedRequired} career steps checked. Nice pace.`
-              : "Start with one small lab or career task. Small steps add up."}
-          </p>
         </section>
 
         <div className="sidebar-footer">
@@ -1585,7 +1571,6 @@ function App() {
             <div className="topbar-route">
               <span className="topbar-route-code">{activeRoute.code} / 08</span>
               <div>
-                <span className="topbar-context">{activeRoute.context}</span>
                 <h1 id="viewTitle">
                   {activeView === 'career-paths' ? `${profile.shortName} path` : activeRoute.title}
                 </h1>
@@ -1619,15 +1604,12 @@ function App() {
             <header className="dashboard-intro routing-hero">
               <div className="routing-hero-copy">
                 <p className="route-kicker" id="todayLabel">
-                  01 / THIS WEEK · {new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}
+                  {new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}
                 </p>
                 <h2>
                   Keep going
                   <span>through this semester.</span>
                 </h2>
-                <p>
-                  CS 149 and CS 158A are enrolled for Fall 2026. Practice processes, networks, and the skills you will need for Summer 2027 internships.
-                </p>
                 <div className="dashboard-actions">
                   <button className="button button-primary button-large" type="button" onClick={() => navigate('courses')}>
                     Open course prep <ChevronRight size={16} />
@@ -1644,34 +1626,39 @@ function App() {
                   <strong id="readinessScore">{String(readinessScore).padStart(2, '0')}</strong>
                   <small>/100</small>
                 </div>
-                <svg viewBox="0 0 520 190" role="img" aria-label="Route from course preparation to recruiting">
-                  <defs>
-                    <linearGradient id="signal-route-gradient" x1="0" x2="1">
-                      <stop offset="0" stopColor="var(--signal)" />
-                      <stop offset={`${readinessScore}%`} stopColor="var(--signal)" />
-                      <stop offset={`${readinessScore}%`} stopColor="var(--rail-muted)" />
-                      <stop offset="1" stopColor="var(--rail-muted)" />
-                    </linearGradient>
-                  </defs>
-                  <path className="routing-plot-grid" d="M16 48H504M16 104H504M16 160H504" />
-                  <path className="routing-plot-path" d="M24 150C92 150 94 62 174 62H284C354 62 354 126 424 126H496" />
-                  <g className="routing-plot-node is-current">
-                    <circle cx="24" cy="150" r="7" />
-                    <text x="24" y="178">NOW</text>
-                  </g>
-                  <g className="routing-plot-node">
-                    <circle cx="174" cy="62" r="7" />
-                    <text x="174" y="42">COURSES</text>
-                  </g>
-                  <g className="routing-plot-node">
-                    <circle cx="424" cy="126" r="7" />
-                    <text x="424" y="154">EVIDENCE</text>
-                  </g>
-                  <g className="routing-plot-node">
-                    <circle cx="496" cy="126" r="7" />
-                    <text x="496" y="106">APPLY</text>
-                  </g>
-                </svg>
+                <div className="routing-plot-map">
+                  <svg viewBox="0 0 520 190" role="img" aria-label="Route from course preparation to recruiting">
+                    <defs>
+                      <linearGradient id="signal-route-gradient" x1="0" x2="1">
+                        <stop offset="0" stopColor="var(--signal)" />
+                        <stop offset={`${readinessScore}%`} stopColor="var(--signal)" />
+                        <stop offset={`${readinessScore}%`} stopColor="var(--rail-muted)" />
+                        <stop offset="1" stopColor="var(--rail-muted)" />
+                      </linearGradient>
+                    </defs>
+                    <path className="routing-plot-grid" d="M16 48H504M16 104H504M16 160H504" />
+                    <path className="routing-plot-path" d="M24 150C92 150 94 62 174 62H284C354 62 354 126 424 126H496" />
+                    <g className="routing-plot-node is-current">
+                      <circle cx="24" cy="150" r="7" />
+                    </g>
+                    <g className="routing-plot-node">
+                      <circle cx="174" cy="62" r="7" />
+                    </g>
+                    <g className="routing-plot-node">
+                      <circle cx="424" cy="126" r="7" />
+                    </g>
+                    <g className="routing-plot-node">
+                      <circle cx="496" cy="126" r="7" />
+                    </g>
+                  </svg>
+                  {/* HTML labels over the chart stay 12px however small the chart is drawn. */}
+                  <div className="routing-plot-labels" aria-hidden="true">
+                    <span style={{ left: '4.62%', top: '93.68%' }}>NOW</span>
+                    <span style={{ left: '33.46%', top: '22.11%' }}>COURSES</span>
+                    <span style={{ left: '81.54%', top: '81.05%' }}>EVIDENCE</span>
+                    <span style={{ left: '95.38%', top: '55.79%' }}>APPLY</span>
+                  </div>
+                </div>
                 <p>
                   {weeklyCompleteCount + modulesCompleteCount === 0
                     ? 'Next step: finish one guided lab.'
@@ -1685,11 +1672,11 @@ function App() {
               <button type="button" className="signal-meter" onClick={() => document.querySelector('.focus-bench')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
                 <span className="mono-label">STUDY BANKED</span>
                 <strong>{(studyMinutes / 60).toFixed(1)}<small> / {Math.round(totalPlannedMinutes / 60)} h planned</small></strong>
-                <span className="signal-meter-note">
-                  {studyMinutes === 0
-                    ? 'Finish a focus block, weekly task, or lab to start the log'
-                    : `${focusLog.sessions} focus block${focusLog.sessions === 1 ? '' : 's'} + ${totalCodexComplete} finished item${totalCodexComplete === 1 ? '' : 's'}`}
-                </span>
+                {studyMinutes > 0 && (
+                  <span className="signal-meter-note">
+                    {`${focusLog.sessions} focus block${focusLog.sessions === 1 ? '' : 's'} + ${totalCodexComplete} finished item${totalCodexComplete === 1 ? '' : 's'}`}
+                  </span>
+                )}
                 <span className="signal-meter-action">Start a focus block <ChevronRight size={14} /></span>
               </button>
               <button type="button" className="signal-meter" onClick={() => navigate('academic-plan')}>
@@ -1711,7 +1698,7 @@ function App() {
                   : <strong>{daysUntil(INTERNSHIP_APPS_OPEN)}<small> days</small></strong>}
                 <span className="signal-meter-note">
                   {countdownReached(INTERNSHIP_APPS_OPEN)
-                    ? 'Applications open — go apply'
+                    ? 'Applications open'
                     : 'Estimated early August — check each company for exact dates'}
                 </span>
                 <span className="signal-meter-action">Track applications <ChevronRight size={14} /></span>
@@ -1796,9 +1783,6 @@ function App() {
                 <div className="timer" id="timerDisplay">
                   {formatTimer(timerRemaining)}
                 </div>
-                <p id="timerPrompt" className="timer-prompt">
-                  Close extra tabs, finish one small task, and write down what you learned.
-                </p>
                 <div className="timer-controls">
                   <button className="button button-primary" id="timerToggle" type="button" onClick={toggleTimer}>
                     {timerRunning ? 'Pause focus' : timerRemaining < FOCUS_BLOCK_SECONDS ? 'Resume focus' : 'Start focus'}
@@ -1811,7 +1795,6 @@ function App() {
                   <span>{focusLog.sessions}</span>
                   focus block{focusLog.sessions === 1 ? '' : 's'} banked
                 </div>
-                <blockquote>“Mastery is being able to predict what happens next.”</blockquote>
               </aside>
             </div>
 
@@ -1819,7 +1802,6 @@ function App() {
             <section className="course-readiness" aria-labelledby="course-readiness-heading" style={{ marginTop: '48px' }}>
               <div className="section-heading-row course-readiness-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div>
-                  <p className="mono-label">TWO SYSTEMS, ONE FOUNDATION</p>
                   <h3 id="course-readiness-heading" style={{ fontSize: '1.6rem', margin: '0' }}>Course readiness</h3>
                 </div>
                 <button className="text-button arrow-link" type="button" onClick={() => navigate('courses')}>
@@ -1854,7 +1836,7 @@ function App() {
                             <button className="text-button" type="button" onClick={() => setOpenModuleId(module.id)} style={{ flex: '1', textAlign: 'left', fontWeight: '500' }}>
                               {module.title}
                             </button>
-                            <time style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--muted)' }}>
+                            <time style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--muted)' }}>
                               {module.duration.replace(" hours", "h").replace(" hour", "h")}
                             </time>
                           </li>
@@ -1910,9 +1892,7 @@ function App() {
 
             {/* Bottom Lab Note */}
             <section className="lab-note" aria-labelledby="lab-note-heading" style={{ marginTop: '48px' }}>
-              <div className="lab-note-index" aria-hidden="true">NOTE<br />07.14</div>
               <div>
-                <p className="mono-label">WHY THIS MATTERS FOR DATA SCIENCE</p>
                 <h3 id="lab-note-heading">Data science also needs systems skills.</h3>
                 <p>
                   Operating systems explain why parallel jobs slow down, memory use grows, and files become bottlenecks. Networks explain how data reaches an API, a cluster, or cloud storage. These courses support real data work.
@@ -1929,9 +1909,8 @@ function App() {
         {activeView === 'courses' && (
           <section className="view is-active" id="view-courses">
             <ViewIntro
-              eyebrow="02 / COURSE PREP"
               title="Practice the core ideas this semester."
-              description="Each module gives you something to run, inspect, or explain. Assignments may change by instructor, but the core ideas stay useful."
+              description="Assignments may change by instructor, but the core ideas stay useful."
               action={
                 <div className="course-selector" role="group" aria-label="Choose a course">
                   <button
@@ -2055,7 +2034,6 @@ function App() {
         {activeView === 'academic-plan' && (
           <section className="view is-active" id="view-roadmap">
             <ViewIntro
-              eyebrow="03 / ACADEMIC PLAN"
               title="Finish required courses. Choose useful electives."
               description="This is a planning guide, not an official degree audit. Mark finished courses, then check MyProgress and talk with a CS advisor."
               action={
@@ -2268,9 +2246,7 @@ function App() {
         {activeView === 'campus-resources' && (
           <section className="view is-active" id="view-campus">
             <ViewIntro
-              eyebrow="04 / CAMPUS RESOURCES"
               title="Check official SJSU sources first."
-              description="Find degree requirements, advising, department information, and career resources in one place."
             />
 
             <div className="campus-sjsu-view" style={{ display: 'grid', gap: '32px' }}>
@@ -2385,7 +2361,6 @@ function App() {
             </nav>
 
             <ViewIntro
-              eyebrow={profile.eyebrow}
               title={profile.name}
               description={profile.summary}
               action={
@@ -2435,13 +2410,13 @@ function App() {
                           {phase.index}
                         </span>
                         <div className="phase-title" style={{ flex: '1' }}>
-                          <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>{phase.window}</span>
+                          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>{phase.window}</span>
                           <h2 style={{ fontSize: '1.3rem', margin: '4px 0 0', fontWeight: '600' }}>{phase.title}</h2>
                           <p style={{ margin: '4px 0 0', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>{phase.purpose}</p>
                         </div>
                         <div className="phase-score" style={{ textAlign: 'right', flexShrink: '0' }}>
                           <strong style={{ display: 'block', fontSize: '1.1rem' }}>{phaseDone}/{phaseRequired.length}</strong>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>required</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>required</span>
                         </div>
                       </header>
 
@@ -2466,9 +2441,9 @@ function App() {
                                 {isComplete && <Check size={14} />}
                               </button>
                               <div className="roadmap-task-copy" style={{ flex: '1' }}>
-                                <div className="task-meta" style={{ display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
+                                <div className="task-meta" style={{ display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
                                   <span>{task.effort}</span>
-                                  {task.optional && <span className="optional-tag" style={{ color: 'var(--path-accent)', fontWeight: '600' }}>Optional</span>}
+                                  {task.optional && <span className="optional-tag" style={{ color: 'var(--path-accent-text)', fontWeight: '600' }}>Optional</span>}
                                 </div>
                                 <h3 style={{ fontSize: '1.05rem', margin: '4px 0 0', fontWeight: '600' }}>{task.title}</h3>
                                 <p style={{ margin: '4px 0 0', fontSize: '0.92rem', color: 'var(--ink-soft)' }}>{task.detail}</p>
@@ -2512,7 +2487,7 @@ function App() {
                     <article className={`project-card ${pIdx === 0 ? 'featured' : ''}`} key={project.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', padding: '28px' }}>
                       <header className="project-card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px' }}>
                         <div>
-                          <div className="project-labels" style={{ display: 'flex', gap: '8px', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', marginBottom: '8px' }}>
+                          <div className="project-labels" style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', marginBottom: '8px' }}>
                             <span>{project.label}</span>
                             <span>Project {pIdx + 1} of {projects.length}</span>
                           </div>
@@ -2521,7 +2496,7 @@ function App() {
                         </div>
                         <div className="project-score" style={{ textAlign: 'right' }}>
                           <strong style={{ fontSize: '1.4rem', display: 'block' }}>{percent}%</strong>
-                          <span style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>{done}/{project.milestones.length} milestones</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{done}/{project.milestones.length} milestones</span>
                         </div>
                       </header>
 
@@ -2534,7 +2509,7 @@ function App() {
                       <div className="decision-callout" style={{ display: 'flex', gap: '12px', background: 'var(--surface-muted)', padding: '16px', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}>
                         <Target size={20} style={{ color: 'var(--path-accent)', flexShrink: '0', marginTop: '2px' }} />
                         <div>
-                          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>WHAT THIS PROJECT SHOWS</span>
+                          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>WHAT THIS PROJECT SHOWS</span>
                           <p style={{ margin: '4px 0 0', fontSize: '0.94rem', fontWeight: '600', color: 'var(--ink)' }}>{project.decision}</p>
                         </div>
                       </div>
@@ -2595,7 +2570,7 @@ function App() {
 
                       <div className="resume-proof" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                         <div>
-                          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>RESUME BULLET POINT</span>
+                          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: '600' }}>RESUME BULLET POINT</span>
                           <p style={{ margin: '4px 0 0', fontStyle: 'italic', fontSize: '0.92rem', color: 'var(--ink)' }}>“{project.resumeLine}”</p>
                         </div>
                         <a href={project.datasetUrl} target="_blank" rel="noreferrer" className="button button-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem' }}>
@@ -2621,7 +2596,7 @@ function App() {
 
             <section className="resource-controls" aria-label="Filter resources" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '28px 0', padding: '16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>
               <label style={{ flex: '1', minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Search resources</span>
+                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Search resources</span>
                 <input
                   value={resourceQuery}
                   onChange={(event) => setResourceQuery(event.target.value)}
@@ -2630,13 +2605,13 @@ function App() {
                 />
               </label>
               <label style={{ minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Topic</span>
+                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Topic</span>
                 <select value={resourceCategory} onChange={(event) => setResourceCategory(event.target.value)} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>
                   {categories.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </label>
               <label style={{ minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Resource type</span>
+                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Resource type</span>
                 <select value={resourceKind} onChange={(event) => setResourceKind(event.target.value)} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>
                   {kinds.map((k) => <option key={k} value={k}>{k === 'Primary spine' ? 'Start here' : k}</option>)}
                 </select>
@@ -2690,7 +2665,7 @@ function App() {
                           <option value="complete">Complete</option>
                         </select>
                       </label>
-                      <small style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Verified {res.verified}</small>
+                      <small style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Verified {res.verified}</small>
                     </div>
                   </article>
                 )
@@ -2720,9 +2695,7 @@ function App() {
         {activeView === 'outreach-applications' && (
           <section className="view is-active applications-route" id="view-applications">
             <ViewIntro
-              eyebrow="07 / APPLICATIONS"
               title="Keep every application moving."
-              description="Save Summer 2027 openings, choose the next step, and track each application from start to finish."
             />
 
             <section className="recruitment-calendar" aria-labelledby="recruitment-window-title">
@@ -2929,7 +2902,6 @@ function App() {
         {activeView === 'evidence-shelf' && (
           <section className="view is-active" id="view-sources">
             <ViewIntro
-              eyebrow="08 / SOURCES"
               title="Know where the information comes from."
               description="Course details and student benefits can change. Each item shows its source, so you can separate official information, class syllabi, student opinions, and study suggestions."
               action={
@@ -3041,7 +3013,7 @@ function App() {
                     <h3 style={{ fontSize: '1.1rem', margin: '0', fontWeight: '600' }}>{source.title}</h3>
                     <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: 'var(--ink-soft)' }}>{source.description}</p>
                   </div>
-                  <span className="source-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--muted)', minWidth: '120px', textAlign: 'right' }}>
+                  <span className="source-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--muted)', minWidth: '120px', textAlign: 'right' }}>
                     {source.meta}
                   </span>
                   <a className="source-link" href={source.url} target="_blank" rel="noreferrer" aria-label={`Open ${source.title}`}>
